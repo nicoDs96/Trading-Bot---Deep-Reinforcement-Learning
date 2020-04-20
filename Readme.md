@@ -9,3 +9,4 @@ For a detailed description and references to the original work check the report.
 
 ## To Do:
 - Add command line arguments to run custom training/test
+- Implement real market simulation
