@@ -7,11 +7,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-Transition = namedtuple('Transition', ('state', 'action', 'next_state', 'reward') )
+Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
 
 class ReplayMemory(object):
-
     def __init__(self, capacity):
         self.capacity = capacity
         self.memory = []
@@ -31,15 +30,21 @@ class ReplayMemory(object):
         return len(self.memory)
 
 
-
 def print_stats(model, c_return, t):
     c_return = np.array(c_return).flatten()
-    t.add_row([str(model), "%.2f" % np.mean(c_return), "%.2f" % np.amax(c_return), "%.2f" % np.amin(c_return),
-               "%.2f" % np.std(c_return)])
+    t.add_row(
+        [
+            str(model),
+            "%.2f" % np.mean(c_return),
+            "%.2f" % np.amax(c_return),
+            "%.2f" % np.amin(c_return),
+            "%.2f" % np.std(c_return),
+        ]
+    )
 
 
-def plot_conf_interval(name, cum_returns ):
-    """ NB. cum_returns must be 2-dim """
+def plot_conf_interval(name, cum_returns):
+    """NB. cum_returns must be 2-dim"""
     # Mean
     M = np.mean(np.array(cum_returns), axis=0)
     # std dev
@@ -51,15 +56,16 @@ def plot_conf_interval(name, cum_returns ):
     plt.figure(figsize=(20, 5))
     plt.xlabel("Trading Instant (h)")
     plt.ylabel(name)
-    plt.legend(['Cumulative Averadge Return (%)'], loc='upper left')
+    plt.legend(["Cumulative Averadge Return (%)"], loc="upper left")
     plt.grid(True)
     plt.ylim(-5, 15)
     plt.plot(range(len(M)), M, linewidth=2)  # mean curve.
-    plt.fill_between(range(len(M)), LL, UL, color='b', alpha=.2)  # std curves.
+    plt.fill_between(range(len(M)), LL, UL, color="b", alpha=0.2)  # std curves.
     plt.show()
 
-def plot_multiple_conf_interval(names, cum_returns_list ):
-    """ NB. cum_returns[i] must be 2-dim """
+
+def plot_multiple_conf_interval(names, cum_returns_list):
+    """NB. cum_returns[i] must be 2-dim"""
     i = 1
 
     for cr in cum_returns_list:
@@ -73,41 +79,47 @@ def plot_multiple_conf_interval(names, cum_returns_list ):
         UL = M + 0.95 * S
 
         plt.xlabel("Trading Instant (h)")
-        plt.ylabel(names[i-1])
-        plt.title('Cumulative Averadge Return (%)')
+        plt.ylabel(names[i - 1])
+        plt.title("Cumulative Averadge Return (%)")
         plt.grid(True)
         plt.plot(range(len(M)), M, linewidth=2)  # mean curve.
-        plt.fill_between(range(len(M)), LL, UL, color='b', alpha=.2)  # std curves.
+        plt.fill_between(range(len(M)), LL, UL, color="b", alpha=0.2)  # std curves.
         i += 1
 
     plt.show()
 
 
-
-
 def load_data(path):
-    if os.path.isfile(path + 'hourly_aggregated_dataset.csv'):
-        df = pd.read_csv(path + 'hourly_aggregated_dataset.csv')
+    if os.path.isfile(path + "hourly_aggregated_dataset.csv"):
+        df = pd.read_csv(path + "hourly_aggregated_dataset.csv")
+        print('Shape of aggregated dataset:', df.shape)
     else:
         # Aggregate the dataset hourly by picking the value at first row for Open,
         # the max within an hour for High, the minimum for Low, the last value for Close
 
-        df = pd.read_csv(path + 'coinbaseUSD_1-min_data_2014-12-01_to_2019-01-09.csv')
+        df = pd.read_csv(path + "coinbaseUSD_1-min_data_2014-12-01_to_2019-01-09.csv")
         df_hourly_aggregated = pd.DataFrame()
 
         for count in range(0, len(df) - 60, 60):
-            hour_interval = pd.DataFrame(df.iloc[count:count + 60])
-            df_hourly_aggregated = df_hourly_aggregated.append(pd.DataFrame([[hour_interval['Open'].iloc[0],
-                                                                              hour_interval['High'].max(),
-                                                                              hour_interval['Low'].min(),
-                                                                              hour_interval['Close'].iloc[
-                                                                                  len(hour_interval) - 1]]]))
+            hour_interval = pd.DataFrame(df.iloc[count : count + 60])
+            df_hourly_aggregated = df_hourly_aggregated.append(
+                pd.DataFrame(
+                    [
+                        [
+                            hour_interval["Open"].iloc[0],
+                            hour_interval["High"].max(),
+                            hour_interval["Low"].min(),
+                            hour_interval["Close"].iloc[len(hour_interval) - 1],
+                        ]
+                    ]
+                )
+            )
 
-        df_hourly_aggregated.columns = ['Open', 'High', 'Low', 'Close']
+        df_hourly_aggregated.columns = ["Open", "High", "Low", "Close"]
         df_hourly_aggregated.index = np.arange(1, len(df_hourly_aggregated) + 1)
         df_hourly_aggregated.interpolate(inplace=True)
-        df_hourly_aggregated.fillna(method='bfill', axis=0, inplace=True)
-        df_hourly_aggregated.to_csv(path + 'hourly_aggregated_dataset.csv', index=False)
+        df_hourly_aggregated.fillna(method="bfill", axis=0, inplace=True)
+        df_hourly_aggregated.to_csv(path + "hourly_aggregated_dataset.csv", index=False)
         df = df_hourly_aggregated
         del df_hourly_aggregated
     return df

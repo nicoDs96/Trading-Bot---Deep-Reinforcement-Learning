@@ -10,3 +10,19 @@ For a detailed description and references to the original work check the report.
 ## To Do:
 - Add command line arguments to run custom training/test
 - Implement real market simulation
+
+# Dependencies 
+Dependecies:    
+* prettytable (`pip install prettytable`)  
+* PyTorch
+* tqdm
+* pandas
+* numpy
+* matplotlib
+    
+To Run Pretrained Models:   
+* `python main.py`  
+
+To Run Train and Test:  
+* `python train_test.py`
+

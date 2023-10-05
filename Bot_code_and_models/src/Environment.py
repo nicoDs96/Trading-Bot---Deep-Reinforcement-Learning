@@ -54,18 +54,21 @@ class Environment:
         self.agent_open_position_value = 0
 
         self.cumulative_return = [0 for e in range(len(self.data))]
-        self.init_price = self.data.iloc[0, :]['Close']
+        self.init_price = self.data.iloc[0, :]["Close"]
 
     def get_state(self):
         """
-            Return the current state of the environment. NOTE: if called after
-            Environment.step() it will return the next state.
+        Return the current state of the environment. NOTE: if called after
+        Environment.step() it will return the next state.
         """
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if not self.done:
-            return torch.tensor([el for el in self.data.iloc[self.t - 23:self.t + 1, :]['Close']], device=device,
-                                dtype=torch.float)
+            return torch.tensor(
+                [el for el in self.data.iloc[self.t - 23 : self.t + 1, :]["Close"]],
+                device=device,
+                dtype=torch.float,
+            )
         else:
             return None
 
@@ -90,14 +93,14 @@ class Environment:
 
         reward = 0
         # GET CURRENT STATE
-        state = self.data.iloc[self.t, :]['Close']
+        state = self.data.iloc[self.t, :]["Close"]
 
         # EXECUTE THE ACTION (act = 0: stay, 1: buy, 2: sell)
         if act == 0:  # Do Nothing
             pass
 
         if act == 1:  # Buy
-            self.agent_positions.append(self.data.iloc[self.t, :]['Close'])
+            self.agent_positions.append(self.data.iloc[self.t, :]["Close"])
 
         sell_nothing = False
         if act == 2:  # Sell
@@ -105,8 +108,9 @@ class Environment:
             if len(self.agent_positions) < 1:
                 sell_nothing = True
             for position in self.agent_positions:
-                profits += (self.data.iloc[self.t, :][
-                                'Close'] - position)  # profit = close - my_position for each my_position "p"
+                profits += (
+                    self.data.iloc[self.t, :]["Close"] - position
+                )  # profit = close - my_position for each my_position "p"
 
             self.profits[self.t] = profits
             self.agent_positions = []
@@ -114,15 +118,23 @@ class Environment:
 
         self.agent_open_position_value = 0
         for position in self.agent_positions:
-            self.agent_open_position_value += (self.data.iloc[self.t, :]['Close'] - position)
+            self.agent_open_position_value += (
+                self.data.iloc[self.t, :]["Close"] - position
+            )
             # TO CHECK if the calculus is correct according to the definition
-            self.cumulative_return[self.t] += (position - self.init_price) / self.init_price
+            self.cumulative_return[self.t] += (
+                position - self.init_price
+            ) / self.init_price
 
         # COLLECT THE REWARD
         reward = 0
         if self.reward_f == "sr":
-            sr = self.agent_open_position_value / np.std(np.array(self.data.iloc[0:self.t]['Close'])) if np.std(
-                np.array(self.data.iloc[0:self.t]['Close'])) != 0 else 0
+            sr = (
+                self.agent_open_position_value
+                / np.std(np.array(self.data.iloc[0 : self.t]["Close"]))
+                if np.std(np.array(self.data.iloc[0 : self.t]["Close"])) != 0
+                else 0
+            )
             # sr = self.profits[self.t] / np.std(np.array(self.profits))
             if sr <= -4:
                 reward = -10
@@ -154,8 +166,11 @@ class Environment:
         # UPDATE THE STATE
         self.t += 1
 
-        if (self.t == len(self.data) - 1):
+        if self.t == len(self.data) - 1:
             self.done = True
 
-        return torch.tensor([reward], device=device, dtype=torch.float), self.done, torch.tensor([state],
-                                                                                                 dtype=torch.float)  # reward, done, current_state
+        return (
+            torch.tensor([reward], device=device, dtype=torch.float),
+            self.done,
+            torch.tensor([state], dtype=torch.float),
+        )  # reward, done, current_state
