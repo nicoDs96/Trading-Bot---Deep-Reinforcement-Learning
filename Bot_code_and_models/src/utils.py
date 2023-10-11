@@ -96,30 +96,23 @@ def load_data(path):
     else:
         # Aggregate the dataset hourly by picking the value at first row for Open,
         # the max within an hour for High, the minimum for Low, the last value for Close
-
-        df = pd.read_csv(path + "coinbaseUSD_1-min_data_2014-12-01_to_2019-01-09.csv")
-        df_hourly_aggregated = pd.DataFrame()
+        print('Processing `minutes`')
+        df = pd.read_csv(path + "one_minute.csv")
+        dfs_to_concat = []
 
         for count in range(0, len(df) - 60, 60):
-            hour_interval = pd.DataFrame(df.iloc[count : count + 60])
-            df_hourly_aggregated = df_hourly_aggregated.append(
-                pd.DataFrame(
-                    [
-                        [
-                            hour_interval["Open"].iloc[0],
-                            hour_interval["High"].max(),
-                            hour_interval["Low"].min(),
-                            hour_interval["Close"].iloc[len(hour_interval) - 1],
-                        ]
-                    ]
-                )
-            )
+            hour_interval = df.iloc[count : count + 60]
+            aggregated_data = pd.DataFrame({
+                "Open": [hour_interval["Open"].iloc[0]],
+                "High": [hour_interval["High"].max()],
+                "Low": [hour_interval["Low"].min()],
+                "Close": [hour_interval["Close"].iloc[-1]]
+            })
+            dfs_to_concat.append(aggregated_data)
 
-        df_hourly_aggregated.columns = ["Open", "High", "Low", "Close"]
-        df_hourly_aggregated.index = np.arange(1, len(df_hourly_aggregated) + 1)
-        df_hourly_aggregated.interpolate(inplace=True)
-        df_hourly_aggregated.fillna(method="bfill", axis=0, inplace=True)
+        df_hourly_aggregated = pd.concat(dfs_to_concat, ignore_index=True)
         df_hourly_aggregated.to_csv(path + "hourly_aggregated_dataset.csv", index=False)
         df = df_hourly_aggregated
         del df_hourly_aggregated
+        print('Shape of aggregated dataset:', df.shape)
     return df
