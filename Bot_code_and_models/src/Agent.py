@@ -1,6 +1,7 @@
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
+from tensorboardX import SummaryWriter
 from src.models import ConvDQN, ConvDuelingDQN
 from src.utils import ReplayMemory
 from src.utils import Transition
@@ -60,6 +61,8 @@ class Agent:
         MODEL="ddqn",
         DOUBLE=True,
     ):
+        self.writer = SummaryWriter(log_dir='./logs')  # You can customize the log directory
+
 
         self.REPLAY_MEM_SIZE = REPLAY_MEM_SIZE
         self.BATCH_SIZE = BATCH_SIZE
@@ -119,6 +122,9 @@ class Agent:
                 eps_threshold = self.EPS_START
         else:
             eps_threshold = self.EPS_END
+
+        # Log the epsilon value
+        self.writer.add_scalar('Epsilon', eps_threshold, self.steps_done)            
 
         self.steps_done += 1
         # [Exploitation] pick the best action according to current Q approx.
@@ -197,6 +203,7 @@ class Agent:
         loss = F.mse_loss(
             state_action_values, expected_state_action_values
         )  # expected_state_action_values.unsqueeze(1)
+        self.writer.add_scalar('Loss', loss, self.steps_done)        
 
         # Optimize the model
         self.optimizer.zero_grad()
@@ -266,6 +273,8 @@ class Agent:
         # Compute MSE loss
         loss = F.mse_loss(state_action_values, expected_state_action_values)
 
+        self.writer.add_scalar('Loss', loss, self.steps_done)        
+
         # Optimize the model
         self.optimizer.zero_grad()
         loss.backward()
@@ -278,8 +287,11 @@ class Agent:
         cumulative_reward = [0 for t in range(num_episodes)]
         print("Training:")
         for i_episode in tqdm(range(num_episodes)):
+            # Log cumulative reward and loss
+            self.writer.add_scalar('Cumulative Reward', cumulative_reward[i_episode], i_episode)
+
             # Initialize the environment and state
-            env.reset()  # reset the env st it is set at the beginning of the time serie
+            env.reset()  # reset the env st it is set at the beginning of the time series
             self.steps_done = 0
             state = env.get_state()
             for t in range(len(env.data)):  # while not env.done
@@ -317,13 +329,15 @@ class Agent:
 
         # save the model
         if self.DOUBLE:
+
+                        
             model_name = env.reward_f + "_reward_double_" + self.MODEL + "_model"
             count = 0
             while os.path.exists(path + model_name):  # avoid overrinding models
                 count += 1
                 model_name = model_name + "_" + str(count)
 
-        else:
+        else:        
             model_name = env.reward_f + "_reward_" + self.MODEL + "_model"
             count = 0
             while os.path.exists(path + model_name):  # avoid overrinding models

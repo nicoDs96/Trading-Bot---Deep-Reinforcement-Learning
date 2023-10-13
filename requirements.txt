@@ -4,3 +4,4 @@ pandas
 tqdm
 numpy
 matplotlib
+tensorboardX
