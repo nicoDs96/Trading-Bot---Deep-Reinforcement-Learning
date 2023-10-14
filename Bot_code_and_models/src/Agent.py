@@ -61,8 +61,9 @@ class Agent:
         MODEL="ddqn",
         DOUBLE=True,
     ):
-        self.writer = SummaryWriter(log_dir='./logs')  # You can customize the log directory
-
+        self.writer = SummaryWriter(
+            log_dir="./logs"
+        )  # You can customize the log directory
 
         self.REPLAY_MEM_SIZE = REPLAY_MEM_SIZE
         self.BATCH_SIZE = BATCH_SIZE
@@ -75,9 +76,11 @@ class Agent:
         self.HIDDEN_DIM = HIDDEN_DIM
         self.ACTION_NUMBER = ACTION_NUMBER
         self.TARGET_UPDATE = TARGET_UPDATE
+
         self.MODEL = MODEL  # deep q network (dqn) or Dueling deep q network (ddqn)
         self.DOUBLE = DOUBLE  # to understand if use or do not use a 'Double' model (regularization)
         self.TRAINING = True  # to do not pick random actions during testing
+
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print("Agent is using device:\t" + str(self.device))
         """elif self.MODEL == 'lin_ddqn':
@@ -111,7 +114,7 @@ class Agent:
         self.steps_done = 0
         self.training_cumulative_reward = []
 
-    def select_action(self, state):
+    def select_action_tensor(self, state):
         """the epsilon-greedy action selection"""
         state = state.unsqueeze(0).unsqueeze(1)
         sample = random.random()
@@ -124,7 +127,7 @@ class Agent:
             eps_threshold = self.EPS_END
 
         # Log the epsilon value
-        self.writer.add_scalar('Epsilon', eps_threshold, self.steps_done)            
+        self.writer.add_scalar("Epsilon", eps_threshold, self.steps_done)
 
         self.steps_done += 1
         # [Exploitation] pick the best action according to current Q approx.
@@ -138,6 +141,18 @@ class Agent:
                     device=self.device,
                     dtype=torch.long,
                 )
+        
+        # with torch.no_grad():
+        #     # Получите вероятности для каждого действия
+        #     action_probs = self.policy_net(state)
+            
+        #     # Примените softmax для нормализации вероятностей
+        #     action_probs = F.softmax(action_probs, dim=1)
+            
+        #     # Выберите действие на основе вероятностей
+        #     action = torch.multinomial(action_probs, 1)
+            
+        #     return action            
 
         # [Exploration]  pick a random action from the action space
         else:
@@ -203,7 +218,7 @@ class Agent:
         loss = F.mse_loss(
             state_action_values, expected_state_action_values
         )  # expected_state_action_values.unsqueeze(1)
-        self.writer.add_scalar('Loss', loss, self.steps_done)        
+        self.writer.add_scalar("Loss", loss, self.steps_done)
 
         # Optimize the model
         self.optimizer.zero_grad()
@@ -211,6 +226,65 @@ class Agent:
         for param in self.policy_net.parameters():
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
+
+    # def optimize_double_dqn_model(self):
+    #     if len(self.memory) < self.BATCH_SIZE:
+    #         return
+    #     transitions = self.memory.sample(self.BATCH_SIZE)
+    #     batch = Transition(*zip(*transitions))
+    #     non_final_mask = torch.tensor(
+    #         tuple(map(lambda s: s is not None, batch.next_state)),
+    #         device=self.device,
+    #         dtype=torch.bool,
+    #     )
+    #     nfns = [s for s in batch.next_state if s is not None]
+    #     non_final_next_states = torch.cat(nfns).view(len(nfns), -1)
+    #     non_final_next_states = non_final_next_states.unsqueeze(1)
+
+    #     state_batch = torch.cat(batch.state).view(self.BATCH_SIZE, -1)
+    #     state_batch = state_batch.unsqueeze(1)
+    #     action_batch = torch.cat(batch.action).view(self.BATCH_SIZE, -1)
+    #     reward_batch = torch.cat(batch.reward).view(self.BATCH_SIZE, -1)
+    #     # print("state_batch shape: %s\nstate_batch[0]:%s\nactionbatch shape: %s\nreward_batch shape: %s"%(str(state_batch.view(40,-1).shape),str(state_batch.view(40,-1)[0]),str(action_batch.shape),str(reward_batch.shape)))
+
+    #     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+    #     # columns of actions taken. These are the actions which would've been taken
+    #     # for each batch state according to policy_net
+    #     state_action_values = self.policy_net(state_batch).gather(1, action_batch)
+
+    #     # ---------- D-DQN Extra Line---------------
+    #     _, next_state_action = self.policy_net(state_batch).max(1, keepdim=True)
+
+    #     # Compute V(s_{t+1}) for all next states.
+    #     # Expected values of actions for non_final_next_states are computed based
+    #     # on the actions given by policynet.
+    #     # This is merged based on the mask, such that we'll have either the expected
+    #     # state value or 0 in case the state was final.
+    #     # detach removes the tensor from the graph -> no gradient computation is
+    #     # required
+    #     next_state_values = torch.zeros(self.BATCH_SIZE, device=self.device).view(
+    #         self.BATCH_SIZE, -1
+    #     )
+
+    #     out = self.target_net(non_final_next_states)
+    #     next_state_values[non_final_mask] = out.gather(
+    #         1, next_state_action[non_final_mask]
+    #     )
+    #     # next_state_values = next_state_values.view(self.BATCH_SIZE, -1)
+    #     # Compute the expected Q values
+    #     expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
+
+    #     # Compute MSE loss
+    #     loss = F.mse_loss(state_action_values, expected_state_action_values)
+
+    #     self.writer.add_scalar("Loss", loss, self.steps_done)
+
+    #     # Optimize the model
+    #     self.optimizer.zero_grad()
+    #     loss.backward()
+    #     for param in self.policy_net.parameters():
+    #         param.grad.data.clamp_(-1, 1)
+    #     self.optimizer.step()
 
     def optimize_double_dqn_model(self):
         if len(self.memory) < self.BATCH_SIZE:
@@ -226,11 +300,11 @@ class Agent:
         non_final_next_states = torch.cat(nfns).view(len(nfns), -1)
         non_final_next_states = non_final_next_states.unsqueeze(1)
 
-        state_batch = torch.cat(batch.state).view(self.BATCH_SIZE, -1)
+        # Modify the state_batch to include both "Close" and "Target"
+        state_batch = torch.cat(batch.state).view(self.BATCH_SIZE, -1, 2)
         state_batch = state_batch.unsqueeze(1)
         action_batch = torch.cat(batch.action).view(self.BATCH_SIZE, -1)
         reward_batch = torch.cat(batch.reward).view(self.BATCH_SIZE, -1)
-        # print("state_batch shape: %s\nstate_batch[0]:%s\nactionbatch shape: %s\nreward_batch shape: %s"%(str(state_batch.view(40,-1).shape),str(state_batch.view(40,-1)[0]),str(action_batch.shape),str(reward_batch.shape)))
 
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
@@ -262,7 +336,7 @@ class Agent:
         # Compute MSE loss
         loss = F.mse_loss(state_action_values, expected_state_action_values)
 
-        self.writer.add_scalar('Loss', loss, self.steps_done)        
+        self.writer.add_scalar("Loss", loss, self.steps_done)
 
         # Optimize the model
         self.optimizer.zero_grad()
@@ -271,22 +345,25 @@ class Agent:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
+
     def train(self, env, path, num_episodes=40):
         self.TRAINING = True
         cumulative_reward = [0 for t in range(num_episodes)]
+
         print("Training:")
         for i_episode in tqdm(range(num_episodes)):
             # Log cumulative reward and loss
-            self.writer.add_scalar('Cumulative Reward', cumulative_reward[i_episode], i_episode)
+            self.writer.add_scalar(
+                "Cumulative Reward", cumulative_reward[i_episode], i_episode
+            )
 
             # Initialize the environment and state
             env.reset()  # reset the env st it is set at the beginning of the time series
             self.steps_done = 0
             state = env.get_state()
             for t in range(len(env.data)):  # while not env.done
-
                 # Select and perform an action
-                action = self.select_action(state)
+                action = self.select_action_tensor(state)
                 reward, done, _ = env.step(action)
 
                 cumulative_reward[i_episode] += reward.item()
@@ -305,7 +382,8 @@ class Agent:
                 # it will return without doing nothing if we have not enough data to sample
 
                 if self.DOUBLE:
-                    self.optimize_double_dqn_model()
+                    # self.optimize_double_dqn_model()
+                    pass
                 else:
                     self.optimize_model()
 
@@ -316,25 +394,23 @@ class Agent:
             if i_episode % self.TARGET_UPDATE == 0:
                 self.target_net.load_state_dict(self.policy_net.state_dict())
 
-        # save the model
-        if self.DOUBLE:
+        def save_model():
+            # save the model
+            if self.DOUBLE:
+                model_name = env.reward_f + "_reward_double_" + self.MODEL + "_model"
+                count = 0
+                while os.path.exists(path):  # avoid overrinding models
+                    count += 1
+                    model_name = model_name + "_" + str(count)
+            else:
+                model_name = env.reward_f + "_reward_" + self.MODEL + "_model"
+                count = 0
+                while os.path.exists(path):  # avoid overrinding models
+                    count += 1
+                    model_name = model_name + "_" + str(count)
 
-                        
-            model_name = env.reward_f + "_reward_double_" + self.MODEL + "_model"
-            count = 0
-            while os.path.exists(path + model_name):  # avoid overrinding models
-                count += 1
-                model_name = model_name + "_" + str(count)
-
-        else:        
-            model_name = env.reward_f + "_reward_" + self.MODEL + "_model"
-            count = 0
-            while os.path.exists(path + model_name):  # avoid overrinding models
-                count += 1
-                model_name = model_name + "_" + str(count)
-
-        torch.save(self.policy_net.state_dict(), path + model_name)
-
+            torch.save(self.policy_net.state_dict(), path)
+        save_model()
         return cumulative_reward
 
     def test(self, env_test, model_name=None, path=None):
@@ -342,43 +418,56 @@ class Agent:
         cumulative_reward = [0 for t in range(len(env_test.data))]
         reward_list = [0 for t in range(len(env_test.data))]
 
-        if model_name is None:
-            pass
-        elif path is not None:
-            if re.match(".*_dqn_.*", model_name):
-                self.policy_net = ConvDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
-                    self.device
-                )
-                if str(self.device) == "cuda":
-                    self.policy_net.load_state_dict(torch.load(path + model_name))
-                else:
-                    self.policy_net.load_state_dict(
-                        torch.load(path + model_name, map_location=torch.device("cpu"))
+        def load_policy():
+            if model_name is None:
+                pass
+
+            elif path is not None:
+                if re.match(".*_dqn_.*", model_name):
+                    self.policy_net = ConvDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
+                        self.device
                     )
-            elif re.match(".*_ddqn_.*", model_name):
-                self.policy_net = ConvDuelingDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
-                    self.device
-                )
-                if str(self.device) == "cuda":
-                    self.policy_net.load_state_dict(torch.load(path + model_name))
+                    if str(self.device) == "cuda":
+                        # self.policy_net.load_state_dict(torch.load(path + model_name))
+                        self.policy_net.load_state_dict(torch.load(path))
+                    else:
+                        self.policy_net.load_state_dict(
+                            # torch.load(path + model_name, map_location=torch.device("cpu"))
+                            torch.load(path, map_location=torch.device("cpu"))
+                        )
+                elif re.match(".*_ddqn_.*", model_name):
+                    self.policy_net = ConvDuelingDQN(
+                        self.INPUT_DIM, self.ACTION_NUMBER
+                    ).to(self.device)
+                    if str(self.device) == "cuda":
+                        # self.policy_net.load_state_dict(torch.load(path + model_name))
+                        self.policy_net.load_state_dict(torch.load(path))
+                    else:
+                        self.policy_net.load_state_dict(
+                            torch.load(
+                                # path + model_name, map_location=torch.device("cpu")
+                                path, map_location="cpu"
+                            )
+                        )
                 else:
-                    self.policy_net.load_state_dict(
-                        torch.load(path + model_name, map_location=torch.device("cpu"))
+                    raise RuntimeError(
+                        "Please Provide a valid model name or valid path."
                     )
             else:
-                raise RuntimeError("Please Provide a valid model name or valid path.")
-        else:
-            raise RuntimeError("Path can not be None if model Name is not None.")
+                raise RuntimeError("Path can not be None if model Name is not None.")
 
-        env_test.reset()  # reset the env st it is set at the beginning of the time serie
+        # Load policy from train torch model
+        load_policy()
+
+        # PREDICT
+        env_test.reset()  # reset the env st it is set at the beginning of the time series
         state = env_test.get_state()
-        for t in tqdm(range(len(env_test.data))):  # while not env.done
-
+        for t in tqdm(
+            range(len(env_test.data))
+        ):  # while not env.done, this is for agent life time (24 hours?)
             # Select and perform an action
-            action = self.select_action(state)
-
+            action = self.select_action_tensor(state)
             reward, done, _ = env_test.step(action)
-
             cumulative_reward[t] += (
                 reward.item() + cumulative_reward[t - 1 if t - 1 > 0 else 0]
             )
@@ -387,10 +476,8 @@ class Agent:
             # Observe new state: it will be None if env.done = True. It is the next
             # state since env.step() has been called two rows above.
             next_state = env_test.get_state()
-
             # Move to the next state
             state = next_state
-
             if done:
                 break
 

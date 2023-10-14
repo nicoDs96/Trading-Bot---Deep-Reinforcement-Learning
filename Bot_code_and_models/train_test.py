@@ -8,6 +8,7 @@ from src.Environment import Environment
 from src.Agent import Agent
 from src.utils import load_data, print_stats, plot_multiple_conf_interval
 
+
 def main():
     # ----------------------------- LOAD DATA ---------------------------------------------------------------------------
     data_path = "./input/"
@@ -103,7 +104,9 @@ def main():
     profit_train_env.reset()
 
     # Profit Dueling Double DQN
-    cr_profit_dueling_ddqn = dueling_double_dqn_agent.train(profit_train_env, models_path)
+    cr_profit_dueling_ddqn = dueling_double_dqn_agent.train(
+        profit_train_env, models_path
+    )
     profit_train_env.reset()
 
     i = 0
@@ -189,7 +192,9 @@ def main():
     sharpe_train_env.reset()
 
     # Sharpe Dueling Double DQN
-    cr_sharpe_dueling_ddqn = dueling_double_dqn_agent.train(sharpe_train_env, models_path)
+    cr_sharpe_dueling_ddqn = dueling_double_dqn_agent.train(
+        sharpe_train_env, models_path
+    )
     sharpe_train_env.reset()
 
     i = 0

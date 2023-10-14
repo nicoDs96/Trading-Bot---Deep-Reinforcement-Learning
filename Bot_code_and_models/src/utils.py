@@ -89,28 +89,33 @@ def plot_multiple_conf_interval(names, cum_returns_list):
     plt.show()
 
 
-def load_data(path, timerange='1h'):
-    print(f'Processing `minutes?` to {timerange}')
-    if os.path.isfile(path + "aggregated_dataset.csv"):
-        df = pd.read_csv(path + "aggregated_dataset.csv")
-        print('Shape of aggregated dataset:', df.shape)
-    elif timerange == '5m':
+def load_data(path, timerange="1h"):
+    filepath = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/Bot_code_and_models/input/labeled_df.csv"  # os.path.join(path, filename)
+    print(f"Processing `minutes?` to {timerange} from {filepath}")
+    if os.path.isfile(filepath):
+        df = pd.read_csv(filepath)
+        print("Shape of aggregated dataset:", df.shape)
+    elif timerange == "5m":
         df = pd.read_csv(path + "one_minute.csv")
         dfs_to_concat = []
         for count in range(0, len(df) - 300, 300):
             five_minute_interval = df.iloc[count : count + 300]
-            aggregated_data = pd.DataFrame({
-                "Open": [five_minute_interval["Open"].iloc[0]],
-                "High": [five_minute_interval["High"].max()],
-                "Low": [five_minute_interval["Low"].min()],
-                "Close": [five_minute_interval["Close"].iloc[-1]]
-            })
+            aggregated_data = pd.DataFrame(
+                {
+                    "Open": [five_minute_interval["Open"].iloc[0]],
+                    "High": [five_minute_interval["High"].max()],
+                    "Low": [five_minute_interval["Low"].min()],
+                    "Close": [five_minute_interval["Close"].iloc[-1]],
+                }
+            )
             dfs_to_concat.append(aggregated_data)
         df_five_minute_aggregated = pd.concat(dfs_to_concat, ignore_index=True)
-        df_five_minute_aggregated.to_csv(path + "five_minute_aggregated_dataset.csv", index=False)
+        df_five_minute_aggregated.to_csv(
+            path + "five_minute_aggregated_dataset.csv", index=False
+        )
         df = df_five_minute_aggregated
         del df_five_minute_aggregated
-        print(f'Shape for range {timerange} of aggregated dataset:', df.shape)
+        print(f"Shape for range {timerange} of aggregated dataset:", df.shape)
     # equals '1h'
     else:
         # Aggregate the dataset hourly by picking the value at first row for Open,
@@ -121,17 +126,19 @@ def load_data(path, timerange='1h'):
 
         for count in range(0, len(df) - 60, 60):
             hour_interval = df.iloc[count : count + 60]
-            aggregated_data = pd.DataFrame({
-                "Open": [hour_interval["Open"].iloc[0]],
-                "High": [hour_interval["High"].max()],
-                "Low": [hour_interval["Low"].min()],
-                "Close": [hour_interval["Close"].iloc[-1]]
-            })
+            aggregated_data = pd.DataFrame(
+                {
+                    "Open": [hour_interval["Open"].iloc[0]],
+                    "High": [hour_interval["High"].max()],
+                    "Low": [hour_interval["Low"].min()],
+                    "Close": [hour_interval["Close"].iloc[-1]],
+                }
+            )
             dfs_to_concat.append(aggregated_data)
 
         df_hourly_aggregated = pd.concat(dfs_to_concat, ignore_index=True)
         df_hourly_aggregated.to_csv(path + "hourly_aggregated_dataset.csv", index=False)
         df = df_hourly_aggregated
         del df_hourly_aggregated
-        print(f'Shape for range {timerange} of aggregated dataset:', df.shape)
+        print(f"Shape for range {timerange} of aggregated dataset:", df.shape)
     return df

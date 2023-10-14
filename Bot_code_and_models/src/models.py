@@ -55,28 +55,10 @@ class DuelingDQN(nn.Module):
 # Convolutional DQN
 class ConvDQN(nn.Module):
     def __init__(self, seq_len_in, actions_n, kernel_size=8):
-        """
-        Initializes the ConvDQN class.
-
-        Args:
-            seq_len_in (int): The length of the input sequence.
-            actions_n (int): The number of possible actions.
-            kernel_size (int, optional): The size of the kernel for convolutional layers. Defaults to 8.
-
-        Returns:
-            None
-
-        This code snippet defines the __init__ method of a class called ConvDQN. 
-        It initializes the class by setting up the necessary layers and parameters for a convolutional deep Q-network (DQN) model.
-        The __init__ method takes in three arguments: seq_len_in, which is the length of the input sequence; actions_n, which is the number of possible actions; and kernel_size, which is the size of the kernel for the convolutional layers (defaulting to 8). 
-        Inside the method, various layers such as convolutional, pooling, and linear layers are defined using the nn module from PyTorch. 
-        The dimensions of the hidden layer are computed based on the input sequence length, kernel size, and pooling parameters. 
-        The output layer is defined as a linear layer with the hidden layer's dimensions as input and the number of possible actions as output.            
-        """
         super(ConvDQN, self).__init__()
         n_filters = 64
         max_pool_kernel = 2
-        self.conv1 = nn.Conv1d(1, n_filters, kernel_size)
+        self.conv1 = nn.Conv1d(3, n_filters, kernel_size)
         self.maxPool = nn.MaxPool1d(max_pool_kernel, stride=1)
         self.LRelu = nn.LeakyReLU()
         self.conv2 = nn.Conv1d(n_filters, n_filters, kernel_size // 2)
@@ -94,22 +76,16 @@ class ConvDQN(nn.Module):
         self.out_layer = nn.Linear(self.hidden_dim, actions_n)
 
     def forward(self, x):
-        c1_out = self.conv1(x)
+        #### HARDCODE ####
+        reshaped_tensor = x.view(1, 3, 24)
+
+        c1_out = self.conv1(reshaped_tensor)
         max_pool_1 = self.maxPool(self.LRelu(c1_out))
         c2_out = self.conv2(max_pool_1)
         max_pool_2 = self.maxPool(self.LRelu(c2_out))
-        #    print("c1_out:\t%s"%str(c1_out.shape))
-        #    print("max_pool_1:\t%s"%str(max_pool_1.shape))
-        #    print("c2_out:\t%s"%str(c2_out.shape))
-        #    print("max_pool_2:\t%s"%str(max_pool_2.shape))
-
         max_pool_2 = max_pool_2.view(-1, self.hidden_dim)
-        #    print("max_pool_2_view:\t%s"%str(max_pool_2.shape))
 
         return self.LRelu(self.out_layer(max_pool_2))
-
-
-
 
 
 # Convolutional Dueling DQN

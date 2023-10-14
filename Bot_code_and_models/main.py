@@ -8,6 +8,7 @@ from src.Environment import Environment
 from src.Agent import Agent
 from src.utils import load_data, print_stats, plot_multiple_conf_interval
 
+
 def main():
     # ----------------------------- LOAD DATA ---------------------------------------------------------------------------
     data_path = "Bot_code_and_models/input/"
@@ -119,14 +120,18 @@ def main():
 
         # Profit Double DQN
         cr_profit_ddqn_test, _ = double_dqn_agent.test(
-            profit_test_env, model_name="profit_reward_double_dqn_model", path=models_path
+            profit_test_env,
+            model_name="profit_reward_double_dqn_model",
+            path=models_path,
         )
         profit_ddqn_return.append(profit_test_env.cumulative_return)
         profit_test_env.reset()
 
         # Profit Dueling Double DQN
         cr_profit_dueling_ddqn_test, _ = dueling_double_dqn_agent.test(
-            profit_test_env, model_name="profit_reward_double_ddqn_model", path=models_path
+            profit_test_env,
+            model_name="profit_reward_double_ddqn_model",
+            path=models_path,
         )
         profit_dueling_ddqn_return.append(profit_test_env.cumulative_return)
         profit_test_env.reset()
