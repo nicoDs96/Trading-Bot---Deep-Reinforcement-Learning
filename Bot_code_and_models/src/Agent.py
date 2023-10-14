@@ -214,20 +214,9 @@ class Agent:
 
     def optimize_double_dqn_model(self):
         if len(self.memory) < self.BATCH_SIZE:
-            # it will return without doing nothing if we have not enough data to sample
             return
         transitions = self.memory.sample(self.BATCH_SIZE)
-        # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
-        # detailed explanation). This converts batch-array of Transitions
-        # to Transition of batch-arrays.
-        # Transition is the named tuple defined above.
         batch = Transition(*zip(*transitions))
-
-        # Compute a mask of non-final states and concatenate the batch elements
-        # (a final state would've been the one after which simulation ended)
-        #
-        # non_final_mask is a column vector telling wich state of the sampled is final
-        # non_final_next_states contains all the non-final states sampled
         non_final_mask = torch.tensor(
             tuple(map(lambda s: s is not None, batch.next_state)),
             device=self.device,

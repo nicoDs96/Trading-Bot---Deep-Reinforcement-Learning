@@ -55,6 +55,24 @@ class DuelingDQN(nn.Module):
 # Convolutional DQN
 class ConvDQN(nn.Module):
     def __init__(self, seq_len_in, actions_n, kernel_size=8):
+        """
+        Initializes the ConvDQN class.
+
+        Args:
+            seq_len_in (int): The length of the input sequence.
+            actions_n (int): The number of possible actions.
+            kernel_size (int, optional): The size of the kernel for convolutional layers. Defaults to 8.
+
+        Returns:
+            None
+
+        This code snippet defines the __init__ method of a class called ConvDQN. 
+        It initializes the class by setting up the necessary layers and parameters for a convolutional deep Q-network (DQN) model.
+        The __init__ method takes in three arguments: seq_len_in, which is the length of the input sequence; actions_n, which is the number of possible actions; and kernel_size, which is the size of the kernel for the convolutional layers (defaulting to 8). 
+        Inside the method, various layers such as convolutional, pooling, and linear layers are defined using the nn module from PyTorch. 
+        The dimensions of the hidden layer are computed based on the input sequence length, kernel size, and pooling parameters. 
+        The output layer is defined as a linear layer with the hidden layer's dimensions as input and the number of possible actions as output.            
+        """
         super(ConvDQN, self).__init__()
         n_filters = 64
         max_pool_kernel = 2
@@ -89,6 +107,9 @@ class ConvDQN(nn.Module):
         #    print("max_pool_2_view:\t%s"%str(max_pool_2.shape))
 
         return self.LRelu(self.out_layer(max_pool_2))
+
+
+
 
 
 # Convolutional Dueling DQN

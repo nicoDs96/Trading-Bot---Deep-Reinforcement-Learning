@@ -10,8 +10,8 @@ from src.utils import load_data, print_stats, plot_multiple_conf_interval
 
 def main():
     # ----------------------------- LOAD DATA ---------------------------------------------------------------------------
-    data_path = "Bot_code_and_models/input/"
-    models_path = "Bot_code_and_models/models/"
+    data_path = "./input/"
+    models_path = "./models/"
     df = load_data(data_path)
 
     # ----------------------------- AGENTS COMPARISON --------------------------------
@@ -26,8 +26,8 @@ def main():
     HIDDEN_DIM = 120
     ACTION_NUMBER = 3
     TARGET_UPDATE = 10
-    N_TEST = 10
-    TRADING_PERIOD = 4000
+    N_TEST = 30
+    TRADING_PERIOD = 12000
     index = random.randrange(len(df) - TRADING_PERIOD - 1)
 
     dqn_agent = Agent(
