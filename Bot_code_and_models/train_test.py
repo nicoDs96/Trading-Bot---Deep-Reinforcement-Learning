@@ -9,6 +9,10 @@ from src.Agent import Agent
 from src.utils import load_data, print_stats, plot_multiple_conf_interval
 
 
+################## INFORMATION ######################
+### THIS FILE FOR MODELS LEADERBORS TRAINING ########
+#####################################################
+
 def main():
     # ----------------------------- LOAD DATA ---------------------------------------------------------------------------
     data_path = "./input/"
