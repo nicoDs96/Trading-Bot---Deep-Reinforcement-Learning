@@ -24,8 +24,8 @@ SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
 TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
 
 TRADING_PERIOD = 1440
-TEST_SIMULATIONS = 3
-TRAIN_EPOCHS = 10
+TEST_SIMULATIONS = 100
+TRAIN_EPOCHS = 1000
 
 
 class RlPredictor:
@@ -196,7 +196,7 @@ class RlPredictor:
             # plot_multiple_conf_interval()
             # os.remove(MODEL_FILEPATH)
             while os.path.isfile(path=SAVED_MODEL_FILEPATH):
-               time.sleep(30)
+               pass
 
 
 
