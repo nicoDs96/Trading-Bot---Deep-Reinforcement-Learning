@@ -39,8 +39,17 @@ def print_stats(model, c_return, t):
             "%.2f" % np.amax(c_return),
             "%.2f" % np.amin(c_return),
             "%.2f" % np.std(c_return),
+            # TODO: more information
         ]
     )
+
+    return {
+        "mean": np.mean(c_return),
+        "max": np.amax(c_return),
+        "min": np.amin(c_return),
+        "std": np.std(c_return),
+        # TODO: more information
+    }
 
 
 def plot_conf_interval(name, cum_returns):
@@ -62,6 +71,8 @@ def plot_conf_interval(name, cum_returns):
     plt.plot(range(len(M)), M, linewidth=2)  # mean curve.
     plt.fill_between(range(len(M)), LL, UL, color="b", alpha=0.2)  # std curves.
     plt.show()
+
+    plt.savefig()
 
 
 def plot_multiple_conf_interval(names, cum_returns_list):
@@ -89,13 +100,9 @@ def plot_multiple_conf_interval(names, cum_returns_list):
     plt.show()
 
 
-def load_data(path, timerange="1h"):
-    filepath = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/Bot_code_and_models/input/labeled_df.csv"  # os.path.join(path, filename)
-    print(f"Processing `minutes?` to {timerange} from {filepath}")
-    if os.path.isfile(filepath):
-        df = pd.read_csv(filepath)
-        print("Shape of aggregated dataset:", df.shape)
-    elif timerange == "5m":
+def split_raw_to_timerange():
+    # TODO: it can be data kitchen
+    if False:
         df = pd.read_csv(path + "one_minute.csv")
         dfs_to_concat = []
         for count in range(0, len(df) - 300, 300):
@@ -116,11 +123,7 @@ def load_data(path, timerange="1h"):
         df = df_five_minute_aggregated
         del df_five_minute_aggregated
         print(f"Shape for range {timerange} of aggregated dataset:", df.shape)
-    # equals '1h'
-    else:
-        # Aggregate the dataset hourly by picking the value at first row for Open,
-        # the max within an hour for High, the minimum for Low, the last value for Close
-
+    if False:
         df = pd.read_csv(path + "one_minute.csv")
         dfs_to_concat = []
 
@@ -141,4 +144,15 @@ def load_data(path, timerange="1h"):
         df = df_hourly_aggregated
         del df_hourly_aggregated
         print(f"Shape for range {timerange} of aggregated dataset:", df.shape)
+    raise Exception("NOT IMPLEMENTED YET!")
+
+
+def load_data(filepath=None, timerange=None):
+    print(f"Processing `minutes?` to {timerange} from {filepath}")
+    if os.path.isfile(filepath):
+        df = pd.read_csv(filepath)
+        print("Shape of aggregated dataset:", df.shape)
+    else:
+        raise Exception("WE NEED FILE!!!!")
+
     return df

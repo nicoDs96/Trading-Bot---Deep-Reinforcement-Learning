@@ -1,0 +1,18 @@
+version: '3'
+services:
+  my-python-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: my-python-app-image
+    container_name: my-python-app-container
+    environment:
+      - TENSORBOARD_LOGS=/app/Bot_code_and_models/logs
+      - TORCH_MODEL_FILEPATH=/app/Bot_code_and_models/models/profit_reward_double_ddqn_model
+      - TRAIN_FILEPATH=/app/Bot_code_and_models/input/labeled_df.csv
+      - IN_DOCKER=True
+    ports:
+      - "6006:6006"  
+    volumes:
+      - ./app:/app 
+    restart: always

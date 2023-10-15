@@ -1,20 +1,31 @@
 from prettytable import PrettyTable as PrettyTable
 from time import time
+from datetime import datetime
 import pandas as pd
+import numpy as np
 import random
 import os
 
 from src.Agent import Agent
 from src.Environment import Environment
-from src.utils import load_data, print_stats, plot_multiple_conf_interval
+from src.utils import load_data, print_stats, plot_multiple_conf_interval, plot_conf_interval
+from dotenv import load_dotenv
+
+from tensorboardX import SummaryWriter
+
 
 # to yaml / .env config [w4]
-N_TEST = 10
-TRADING_PERIOD = 5000
-MODEL_FILEPATH = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/Bot_code_and_models/models/profit_reward_double_ddqn_model"
-data_path = "./input/"
-models_path = "./models/"
-EPOCHS = 10
+docker = os.getenv("IN_DOCKER" or None)
+if docker is None:
+    load_dotenv()
+
+TENSORBOARD_LOGS_DIR = os.getenv("TENSORBOARD_LOGS")
+SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
+TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
+
+TRADING_PERIOD = 1440
+TEST_SIMULATIONS = 3
+TRAIN_EPOCHS = 10
 
 
 class RlPredictor:
@@ -27,10 +38,13 @@ class RlPredictor:
         self.init_agent()
         self.profit_train_env = None
         self.profit_test_env = None
+        self.writer = SummaryWriter(
+            log_dir=TENSORBOARD_LOGS_DIR
+        )  # You can customize the log directory
 
     def init_data(self) -> pd.DataFrame:
         # it can be replace for train data loader from open api or ccxt
-        df = load_data(data_path)
+        df = load_data(TRAIN_DATA_FILEPATH)
         return df
 
     def init_agent(self) -> Agent:
@@ -63,8 +77,8 @@ class RlPredictor:
             DOUBLE=True,
         )
 
-    def init_model(self) -> list:
-        model_filepath = MODEL_FILEPATH  # os.path.join(models_path, "profit_reward_double_dqn_model")
+    def init_model(self) -> None:
+        model_filepath = SAVED_MODEL_FILEPATH  # os.path.join(models_path, "profit_reward_double_dqn_model")
         print(f"search model in {model_filepath}")
         Train = not os.path.isfile(path=model_filepath)
         print("pretrainded model not exist:", Train)
@@ -75,21 +89,26 @@ class RlPredictor:
                 self.df[self.index : self.index + self.train_size], "profit"
             )
             self.double_dqn_agent_test = self.double_dqn_agent.train(
-                env=self.profit_train_env, path=model_filepath, num_episodes=EPOCHS
+                env=self.profit_train_env,
+                path=model_filepath,
+                num_episodes=TRAIN_EPOCHS,
             )
+            # TODO: may be next time we can store images into tensorboard
 
 
-        self.profit_test_env = Environment(
-            self.df[self.index + self.train_size : self.index + TRADING_PERIOD],
-            "profit",
-        )
-        # Profit Double DQN
-        self.double_dqn_agent_test, _ = self.double_dqn_agent.test(
-            env_test=self.profit_test_env,
-            model_name="profit_reward_double_dqn_model",
-            path=model_filepath,
-        )
-        self.profit_ddqn_return.append(self.profit_test_env.cumulative_return)
+        # For ready model
+        else:
+            self.profit_test_env = Environment(
+                self.df[self.index + self.train_size : self.index + TRADING_PERIOD],
+                "profit",
+            )
+            # Profit Double DQN
+            self.double_dqn_agent_test, _ = self.double_dqn_agent.test(
+                env_test=self.profit_test_env,
+                model_name="profit_reward_double_dqn_model",
+                path=model_filepath,
+            )
+            # self.profit_ddqn_return.append(self.profit_test_env.cumulative_return)
 
     def loop(self):
         while True:
@@ -101,10 +120,10 @@ class RlPredictor:
                 self.profit_test_env.reset()
             if self.profit_train_env is not None:
                 self.profit_train_env.reset()
-            
+
             i = 0
-            while i < N_TEST:
-                # When we retry?
+            while i < TEST_SIMULATIONS:
+                # When we retry? # TODO: fix random to window...
                 index = random.randrange(len(self.df) - TRADING_PERIOD - 1)
                 print(f"Test nr. {str(i + 1)} for rand seed index: {index}")
 
@@ -112,18 +131,25 @@ class RlPredictor:
                 profit_test_env = Environment(
                     self.df[index + self.train_size : index + TRADING_PERIOD], "profit"
                 )
+
                 # Profit Double DQN
                 self.double_dqn_agent_test, _ = self.double_dqn_agent.test(
                     profit_test_env,
                     model_name="profit_reward_double_dqn_model",
-                    path=MODEL_FILEPATH,
+                    path=SAVED_MODEL_FILEPATH,
                 )
 
                 # Comulative return for parallel bots
                 self.profit_ddqn_return.append(profit_test_env.cumulative_return)
-                print(f'Reward for {i}', sum(self.profit_ddqn_return[i]) / len(self.profit_ddqn_return[i]))
+
+                avg_mean = sum(self.profit_ddqn_return[i]) / len(
+                    self.profit_ddqn_return[i]
+                )
+                print(f"Reward for {i}", avg_mean)
                 profit_test_env.reset()
                 i += 1
+
+                self.writer.add_scalar("Agent Test End", avg_mean, i)
 
             # Reporting
             t = PrettyTable(
@@ -135,18 +161,47 @@ class RlPredictor:
                     "Std. Dev.",
                 ]
             )
+
             print(i)
-            print_stats("ProfitDDQN", self.profit_ddqn_return, t)
+            to_tensorboard = print_stats("ProfitDDQN", self.profit_ddqn_return, t)
             print(t)
 
+
+            mean1 = to_tensorboard.get('mean')
+            max1 = to_tensorboard.get('max')
+            min1 = to_tensorboard.get('min')
+            std1 = to_tensorboard.get('std')
+            timestamp_now = datetime.now().timestamp()
+
+            self.writer.add_scalar(
+                'Avg. Return (%)',
+                mean1,
+                timestamp_now 
+            )
+            self.writer.add_scalar(
+                'Max Return (%)',
+                max1,
+                timestamp_now
+            )
+            self.writer.add_scalar(
+                'Min Return (%)',
+                min1,
+                timestamp_now
+            )   
+            self.writer.add_scalar(
+                'Std. Dev',
+                std1,
+                timestamp_now
+            )            
+            # plot_multiple_conf_interval()
             # os.remove(MODEL_FILEPATH)
-            # while os.path.isfile(path=MODEL_FILEPATH):
-            #    time.sleep(1)
-            break
+            while os.path.isfile(path=SAVED_MODEL_FILEPATH):
+               time.sleep(30)
+
 
 
 if __name__ == "__main__":
     agent_predictions = RlPredictor()
-    # we can use model for train?
+    # we can use gpu for train?
     # and use predictions for cpu?
     agent_predictions.loop()

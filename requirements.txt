@@ -5,3 +5,4 @@ tqdm
 numpy
 matplotlib
 tensorboardX
+python-dotenv

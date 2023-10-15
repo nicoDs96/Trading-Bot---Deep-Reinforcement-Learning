@@ -9,6 +9,9 @@ import random
 from tqdm import tqdm
 import re
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Agent:
@@ -62,7 +65,7 @@ class Agent:
         DOUBLE=True,
     ):
         self.writer = SummaryWriter(
-            log_dir="./logs"
+            log_dir=os.getenv("TENSORBOARD_LOGS")
         )  # You can customize the log directory
 
         self.REPLAY_MEM_SIZE = REPLAY_MEM_SIZE
@@ -127,7 +130,7 @@ class Agent:
             eps_threshold = self.EPS_END
 
         # Log the epsilon value
-        self.writer.add_scalar("Epsilon", eps_threshold, self.steps_done)
+        self.writer.add_scalar("Select Action Epsilon", eps_threshold, self.steps_done)
 
         self.steps_done += 1
         # [Exploitation] pick the best action according to current Q approx.
@@ -141,18 +144,18 @@ class Agent:
                     device=self.device,
                     dtype=torch.long,
                 )
-        
+
         # with torch.no_grad():
         #     # Получите вероятности для каждого действия
         #     action_probs = self.policy_net(state)
-            
+
         #     # Примените softmax для нормализации вероятностей
         #     action_probs = F.softmax(action_probs, dim=1)
-            
+
         #     # Выберите действие на основе вероятностей
         #     action = torch.multinomial(action_probs, 1)
-            
-        #     return action            
+
+        #     return action
 
         # [Exploration]  pick a random action from the action space
         else:
@@ -227,65 +230,6 @@ class Agent:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
-    # def optimize_double_dqn_model(self):
-    #     if len(self.memory) < self.BATCH_SIZE:
-    #         return
-    #     transitions = self.memory.sample(self.BATCH_SIZE)
-    #     batch = Transition(*zip(*transitions))
-    #     non_final_mask = torch.tensor(
-    #         tuple(map(lambda s: s is not None, batch.next_state)),
-    #         device=self.device,
-    #         dtype=torch.bool,
-    #     )
-    #     nfns = [s for s in batch.next_state if s is not None]
-    #     non_final_next_states = torch.cat(nfns).view(len(nfns), -1)
-    #     non_final_next_states = non_final_next_states.unsqueeze(1)
-
-    #     state_batch = torch.cat(batch.state).view(self.BATCH_SIZE, -1)
-    #     state_batch = state_batch.unsqueeze(1)
-    #     action_batch = torch.cat(batch.action).view(self.BATCH_SIZE, -1)
-    #     reward_batch = torch.cat(batch.reward).view(self.BATCH_SIZE, -1)
-    #     # print("state_batch shape: %s\nstate_batch[0]:%s\nactionbatch shape: %s\nreward_batch shape: %s"%(str(state_batch.view(40,-1).shape),str(state_batch.view(40,-1)[0]),str(action_batch.shape),str(reward_batch.shape)))
-
-    #     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
-    #     # columns of actions taken. These are the actions which would've been taken
-    #     # for each batch state according to policy_net
-    #     state_action_values = self.policy_net(state_batch).gather(1, action_batch)
-
-    #     # ---------- D-DQN Extra Line---------------
-    #     _, next_state_action = self.policy_net(state_batch).max(1, keepdim=True)
-
-    #     # Compute V(s_{t+1}) for all next states.
-    #     # Expected values of actions for non_final_next_states are computed based
-    #     # on the actions given by policynet.
-    #     # This is merged based on the mask, such that we'll have either the expected
-    #     # state value or 0 in case the state was final.
-    #     # detach removes the tensor from the graph -> no gradient computation is
-    #     # required
-    #     next_state_values = torch.zeros(self.BATCH_SIZE, device=self.device).view(
-    #         self.BATCH_SIZE, -1
-    #     )
-
-    #     out = self.target_net(non_final_next_states)
-    #     next_state_values[non_final_mask] = out.gather(
-    #         1, next_state_action[non_final_mask]
-    #     )
-    #     # next_state_values = next_state_values.view(self.BATCH_SIZE, -1)
-    #     # Compute the expected Q values
-    #     expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
-
-    #     # Compute MSE loss
-    #     loss = F.mse_loss(state_action_values, expected_state_action_values)
-
-    #     self.writer.add_scalar("Loss", loss, self.steps_done)
-
-    #     # Optimize the model
-    #     self.optimizer.zero_grad()
-    #     loss.backward()
-    #     for param in self.policy_net.parameters():
-    #         param.grad.data.clamp_(-1, 1)
-    #     self.optimizer.step()
-
     def optimize_double_dqn_model(self):
         if len(self.memory) < self.BATCH_SIZE:
             return
@@ -300,11 +244,11 @@ class Agent:
         non_final_next_states = torch.cat(nfns).view(len(nfns), -1)
         non_final_next_states = non_final_next_states.unsqueeze(1)
 
-        # Modify the state_batch to include both "Close" and "Target"
-        state_batch = torch.cat(batch.state).view(self.BATCH_SIZE, -1, 2)
+        state_batch = torch.cat(batch.state).view(self.BATCH_SIZE, -1)
         state_batch = state_batch.unsqueeze(1)
         action_batch = torch.cat(batch.action).view(self.BATCH_SIZE, -1)
         reward_batch = torch.cat(batch.reward).view(self.BATCH_SIZE, -1)
+        # print("state_batch shape: %s\nstate_batch[0]:%s\nactionbatch shape: %s\nreward_batch shape: %s"%(str(state_batch.view(40,-1).shape),str(state_batch.view(40,-1)[0]),str(action_batch.shape),str(reward_batch.shape)))
 
         # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
         # columns of actions taken. These are the actions which would've been taken
@@ -345,6 +289,64 @@ class Agent:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
+    # def optimize_double_dqn_model(self):
+    #     if len(self.memory) < self.BATCH_SIZE:
+    #         return
+    #     transitions = self.memory.sample(self.BATCH_SIZE)
+    #     batch = Transition(*zip(*transitions))
+    #     non_final_mask = torch.tensor(
+    #         tuple(map(lambda s: s is not None, batch.next_state)),
+    #         device=self.device,
+    #         dtype=torch.bool,
+    #     )
+    #     nfns = [s for s in batch.next_state if s is not None]
+    #     non_final_next_states = torch.cat(nfns).view(len(nfns), -1)
+    #     non_final_next_states = non_final_next_states.unsqueeze(1)
+
+    #     # Modify the state_batch to include both "Close" and "Target"
+    #     state_batch = torch.cat(batch.state).view(self.BATCH_SIZE, -1, 2)
+    #     state_batch = state_batch.unsqueeze(1)
+    #     action_batch = torch.cat(batch.action).view(self.BATCH_SIZE, -1)
+    #     reward_batch = torch.cat(batch.reward).view(self.BATCH_SIZE, -1)
+
+    #     # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+    #     # columns of actions taken. These are the actions which would've been taken
+    #     # for each batch state according to policy_net
+    #     state_action_values = self.policy_net(state_batch).gather(1, action_batch)
+
+    #     # ---------- D-DQN Extra Line---------------
+    #     _, next_state_action = self.policy_net(state_batch).max(1, keepdim=True)
+
+    #     # Compute V(s_{t+1}) for all next states.
+    #     # Expected values of actions for non_final_next_states are computed based
+    #     # on the actions given by policynet.
+    #     # This is merged based on the mask, such that we'll have either the expected
+    #     # state value or 0 in case the state was final.
+    #     # detach removes the tensor from the graph -> no gradient computation is
+    #     # required
+    #     next_state_values = torch.zeros(self.BATCH_SIZE, device=self.device).view(
+    #         self.BATCH_SIZE, -1
+    #     )
+
+    #     out = self.target_net(non_final_next_states)
+    #     next_state_values[non_final_mask] = out.gather(
+    #         1, next_state_action[non_final_mask]
+    #     )
+    #     # next_state_values = next_state_values.view(self.BATCH_SIZE, -1)
+    #     # Compute the expected Q values
+    #     expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
+
+    #     # Compute MSE loss
+    #     loss = F.mse_loss(state_action_values, expected_state_action_values)
+
+    #     self.writer.add_scalar("Loss", loss, self.steps_done)
+
+    #     # Optimize the model
+    #     self.optimizer.zero_grad()
+    #     loss.backward()
+    #     for param in self.policy_net.parameters():
+    #         param.grad.data.clamp_(-1, 1)
+    #     self.optimizer.step()
 
     def train(self, env, path, num_episodes=40):
         self.TRAINING = True
@@ -354,7 +356,7 @@ class Agent:
         for i_episode in tqdm(range(num_episodes)):
             # Log cumulative reward and loss
             self.writer.add_scalar(
-                "Cumulative Reward", cumulative_reward[i_episode], i_episode
+                "Train Cumulative Reward", cumulative_reward[i_episode], i_episode
             )
 
             # Initialize the environment and state
@@ -380,9 +382,8 @@ class Agent:
 
                 # Perform one step of the optimization (on the policy network): note that
                 # it will return without doing nothing if we have not enough data to sample
-
                 if self.DOUBLE:
-                    # self.optimize_double_dqn_model()
+                    self.optimize_double_dqn_model()
                     pass
                 else:
                     self.optimize_model()
@@ -393,6 +394,8 @@ class Agent:
             # Update the target network, copying all weights and biases of policy_net
             if i_episode % self.TARGET_UPDATE == 0:
                 self.target_net.load_state_dict(self.policy_net.state_dict())
+
+            
 
         def save_model():
             # save the model
@@ -410,6 +413,7 @@ class Agent:
                     model_name = model_name + "_" + str(count)
 
             torch.save(self.policy_net.state_dict(), path)
+
         save_model()
         return cumulative_reward
 
@@ -428,11 +432,9 @@ class Agent:
                         self.device
                     )
                     if str(self.device) == "cuda":
-                        # self.policy_net.load_state_dict(torch.load(path + model_name))
                         self.policy_net.load_state_dict(torch.load(path))
                     else:
                         self.policy_net.load_state_dict(
-                            # torch.load(path + model_name, map_location=torch.device("cpu"))
                             torch.load(path, map_location=torch.device("cpu"))
                         )
                 elif re.match(".*_ddqn_.*", model_name):
@@ -440,14 +442,10 @@ class Agent:
                         self.INPUT_DIM, self.ACTION_NUMBER
                     ).to(self.device)
                     if str(self.device) == "cuda":
-                        # self.policy_net.load_state_dict(torch.load(path + model_name))
                         self.policy_net.load_state_dict(torch.load(path))
                     else:
                         self.policy_net.load_state_dict(
-                            torch.load(
-                                # path + model_name, map_location=torch.device("cpu")
-                                path, map_location="cpu"
-                            )
+                            torch.load(path, map_location="cpu")
                         )
                 else:
                     raise RuntimeError(
@@ -472,6 +470,8 @@ class Agent:
                 reward.item() + cumulative_reward[t - 1 if t - 1 > 0 else 0]
             )
             reward_list[t] = reward
+            self.writer.add_scalar("Test Reward", reward_list[t], t)
+            self.writer.add_scalar("Test Action", action, t)
 
             # Observe new state: it will be None if env.done = True. It is the next
             # state since env.step() has been called two rows above.

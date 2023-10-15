@@ -44,20 +44,23 @@ class Environment:
         if not self.done:
             # print(type(self.data))
             # to_tensors_values = [el for el in self.data.iloc[self.t - 23 : self.t + 1, :][["Close", "Target"]].values]
-            # to_tensors_values = [el for el in self.data.iloc[self.t - 23 : self.t + 1, :]["Close"]]
-            # t1 = torch.tensor(
-            #     to_tensors_values,
-            #     device=device,
-            #     dtype=torch.float,
-            # )
-            to_tensors_values2 = [el for el in self.data.iloc[self.t - 23 : self.t + 1, :][["Target", "Close_SMA_13", "Volume_1024"]].values]
-            t2 = torch.tensor(
-                np.array(to_tensors_values2),  # Преобразуйте список NumPy.ndarray в один массив NumPy
+            to_tensors_values = [el for el in self.data.iloc[self.t - 23 : self.t + 1, :]["Close"]]
+            t1 = torch.tensor(
+                to_tensors_values,
                 device=device,
                 dtype=torch.float,
             )
+            # columns = ["Close", "Target", "SMA_13"]
+            
+            # columns = ["Close"]
+            # to_tensors_values2 = [el for el in self.data.iloc[self.t - 23 : self.t + 1, :][columns].values]
+            # t2 = torch.tensor(
+            #     np.array(to_tensors_values2),  # Преобразуйте список NumPy.ndarray в один массив NumPy
+            #     device=device,
+            #     dtype=torch.float,
+            # )
             # print(t1.shape, t2.shape)
-            return t2
+            return t1
 
         else:
             return None
@@ -86,7 +89,6 @@ class Environment:
         state = self.data.iloc[self.t, :]["Close"]
         # state = self.data.iloc[self.t, :]
         # EXECUTE THE ACTION (act = 0: stay, 1: buy, 2: sell)
-
         if act == 0:  # Do Nothing
             pass
 
