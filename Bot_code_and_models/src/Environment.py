@@ -87,16 +87,20 @@ class Environment:
         reward = 0
         # GET CURRENT STATE
         state = self.data.iloc[self.t, :]["Close"]
-        # state = self.data.iloc[self.t, :]
+
         # EXECUTE THE ACTION (act = 0: stay, 1: buy, 2: sell)
         if act == 0:  # Do Nothing
             pass
 
-        if act == 1:  # Buy
+        # BUY
+        if act == 1:
+            # TODO: integration
             self.agent_positions.append(self.data.iloc[self.t, :]["Close"])
 
+        # SELL
         sell_nothing = False
-        if act == 2:  # Sell
+        if act == 2:
+            # TODO: integration
             profits = 0
             if len(self.agent_positions) < 1:
                 sell_nothing = True

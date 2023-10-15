@@ -12,7 +12,8 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-
+OPTIMISATION = os.getenv('OPTIMISATION' or False)
+print('Optimisation:', OPTIMISATION)
 
 class Agent:
     """Definition of the Agent that will interact with the environment.
@@ -382,11 +383,13 @@ class Agent:
 
                 # Perform one step of the optimization (on the policy network): note that
                 # it will return without doing nothing if we have not enough data to sample
-                if self.DOUBLE:
-                    self.optimize_double_dqn_model()
-                    pass
-                else:
-                    self.optimize_model()
+
+                if bool(OPTIMISATION):
+                    if self.DOUBLE:
+                        self.optimize_double_dqn_model()
+                        pass
+                    else:
+                        self.optimize_model()
 
                 if done:
                     break
@@ -459,6 +462,7 @@ class Agent:
 
         # PREDICT
         env_test.reset()  # reset the env st it is set at the beginning of the time series
+        # TODO: here we can get state from service
         state = env_test.get_state()
         for t in tqdm(
             range(len(env_test.data))

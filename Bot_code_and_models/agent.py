@@ -8,7 +8,12 @@ import os
 
 from src.Agent import Agent
 from src.Environment import Environment
-from src.utils import load_data, print_stats, plot_multiple_conf_interval, plot_conf_interval
+from src.utils import (
+    load_data,
+    print_stats,
+    plot_multiple_conf_interval,
+    plot_conf_interval,
+)
 from dotenv import load_dotenv
 
 from tensorboardX import SummaryWriter
@@ -23,9 +28,9 @@ TENSORBOARD_LOGS_DIR = os.getenv("TENSORBOARD_LOGS")
 SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
 TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
 
-TRADING_PERIOD = 1440
-TEST_SIMULATIONS = 100
-TRAIN_EPOCHS = 1000
+TRADING_PERIOD = 4000
+TEST_SIMULATIONS = 3
+TRAIN_EPOCHS = 40
 
 
 class RlPredictor:
@@ -94,7 +99,6 @@ class RlPredictor:
                 num_episodes=TRAIN_EPOCHS,
             )
             # TODO: may be next time we can store images into tensorboard
-
 
         # For ready model
         else:
@@ -166,38 +170,21 @@ class RlPredictor:
             to_tensorboard = print_stats("ProfitDDQN", self.profit_ddqn_return, t)
             print(t)
 
-
-            mean1 = to_tensorboard.get('mean')
-            max1 = to_tensorboard.get('max')
-            min1 = to_tensorboard.get('min')
-            std1 = to_tensorboard.get('std')
+            mean1 = to_tensorboard.get("mean")
+            max1 = to_tensorboard.get("max")
+            min1 = to_tensorboard.get("min")
+            std1 = to_tensorboard.get("std")
             timestamp_now = datetime.now().timestamp()
 
-            self.writer.add_scalar(
-                'Avg. Return (%)',
-                mean1,
-                timestamp_now 
-            )
-            self.writer.add_scalar(
-                'Max Return (%)',
-                max1,
-                timestamp_now
-            )
-            self.writer.add_scalar(
-                'Min Return (%)',
-                min1,
-                timestamp_now
-            )   
-            self.writer.add_scalar(
-                'Std. Dev',
-                std1,
-                timestamp_now
-            )            
+            self.writer.add_scalar("Avg. Return (%)", mean1, timestamp_now)
+            self.writer.add_scalar("Max Return (%)", max1, timestamp_now)
+            self.writer.add_scalar("Min Return (%)", min1, timestamp_now)
+            self.writer.add_scalar("Std. Dev", std1, timestamp_now)
             # plot_multiple_conf_interval()
             # os.remove(MODEL_FILEPATH)
-            while os.path.isfile(path=SAVED_MODEL_FILEPATH):
-               pass
-
+            # while os.path.isfile(path=SAVED_MODEL_FILEPATH):
+            #    pass
+            input()
 
 
 if __name__ == "__main__":
