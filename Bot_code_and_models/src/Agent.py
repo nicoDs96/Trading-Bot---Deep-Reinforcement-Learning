@@ -12,40 +12,29 @@ import os
 from dotenv import load_dotenv
 
 load_dotenv()
-OPTIMISATION = os.getenv('OPTIMISATION' or False)
-print('Optimisation:', OPTIMISATION)
+OPTIMISATION = os.getenv("OPTIMISATION" or False)
+print("Optimisation:", OPTIMISATION)
+
 
 class Agent:
     """Definition of the Agent that will interact with the environment.
-
     Attributes:
         REPLAY_MEM_SIZE (:obj:`int`): max capacity of Replay Memory
-
         BATCH_SIZE (:obj:`int`): Batch size. Default is 40 as specified in the paper.
-
         GAMMA (:obj:`float`): The discount, should be a constant between 0 and 1
             that ensures the sum converges. It also controls the importance of future
             expected reward.
-
         EPS_START(:obj:`float`): initial value for epsilon of the e-greedy action
             selection
-
         EPS_END(:obj:`float`): final value for epsilon of the e-greedy action
             selection
-
         LEARNING_RATE(:obj:`float`): learning rate of the optimizer
             (Adam)
-
         INPUT_DIM (:obj:`int`): input dimentionality withut considering batch size.
-
         HIDDEN_DIM (:obj:`int`): hidden layer dimentionality (for Linear models only)
-
         ACTION_NUMBER (:obj:`int`): dimentionality of output layer of the Q network
-
         TARGET_UPDATE (:obj:`int`): period of Q target network updates
-
         MODEL (:obj:`string`): type of the model.
-
         DOUBLE (:obj:`bool`): Type of Q function computation.
     """
 
@@ -57,7 +46,7 @@ class Agent:
         EPS_START=1,
         EPS_END=0.12,
         EPS_STEPS=300,
-        LEARNING_RATE=0.001,
+        LEARNING_RATE=0.0001,
         INPUT_DIM=24,
         HIDDEN_DIM=120,
         ACTION_NUMBER=3,
@@ -231,7 +220,7 @@ class Agent:
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
-    def optimize_double_dqn_model(self):
+    def optimize_double_dqn_model(self, episode_index):
         if len(self.memory) < self.BATCH_SIZE:
             return
         transitions = self.memory.sample(self.BATCH_SIZE)
@@ -275,18 +264,44 @@ class Agent:
             1, next_state_action[non_final_mask]
         )
         # next_state_values = next_state_values.view(self.BATCH_SIZE, -1)
+
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
+
+        # logging
+        actual_values = reward_batch
+        predicted_values = state_action_values
 
         # Compute MSE loss
         loss = F.mse_loss(state_action_values, expected_state_action_values)
 
+        rmse = torch.sqrt(F.mse_loss(predicted_values, actual_values))
+        # rmse_percentage = (rmse / range_of_target) * 100
+
+        mse_loss = F.mse_loss(predicted_values, actual_values)
+        l1_loss = F.l1_loss(predicted_values, actual_values)
+
         self.writer.add_scalar("Loss", loss, self.steps_done)
+        self.writer.add_scalar("MSE Loss", mse_loss, self.steps_done)
+        self.writer.add_scalar("RMSE_loss", rmse, self.steps_done)
+        self.writer.add_scalar("L1_loss", l1_loss, self.steps_done)
+
+        self.writer.add_scalar("= Loss", loss, self.steps_done + episode_index)
+        self.writer.add_scalar("= MSE Loss", mse_loss, self.steps_done + episode_index)
+        self.writer.add_scalar("= RMSE_loss", rmse, self.steps_done + episode_index)
+        self.writer.add_scalar("= L1_loss", l1_loss, self.steps_done + episode_index)
+
 
         # Optimize the model
         self.optimizer.zero_grad()
         loss.backward()
         for param in self.policy_net.parameters():
+            if param.grad is not None:
+                self.writer.add_scalar(
+                    "Gradients/" + "optimize_double_dqn_model",
+                    param.grad.norm(),
+                    self.steps_done,
+                )
             param.grad.data.clamp_(-1, 1)
         self.optimizer.step()
 
@@ -349,56 +364,59 @@ class Agent:
     #         param.grad.data.clamp_(-1, 1)
     #     self.optimizer.step()
 
-    def train(self, env, path, num_episodes=40):
+    def train(self, env, path, num_episodes=100):
         self.TRAINING = True
         cumulative_reward = [0 for t in range(num_episodes)]
 
         print("Training:")
-        for i_episode in tqdm(range(num_episodes)):
-            # Log cumulative reward and loss
-            self.writer.add_scalar(
-                "Train Cumulative Reward", cumulative_reward[i_episode], i_episode
-            )
-
+        for episode_index in tqdm(range(num_episodes)):
             # Initialize the environment and state
             env.reset()  # reset the env st it is set at the beginning of the time series
             self.steps_done = 0
             state = env.get_state()
-            for t in range(len(env.data)):  # while not env.done
+            for tick_index in range(len(env.data)):  # while not env.done
                 # Select and perform an action
                 action = self.select_action_tensor(state)
                 reward, done, _ = env.step(action)
-
-                cumulative_reward[i_episode] += reward.item()
-
+                cumulative_reward[episode_index] += reward.item()
                 # Observe new state: it will be None if env.done = True. It is the next
                 # state since env.step() has been called two rows above.
                 next_state = env.get_state()
-
                 # Store the transition in memory
                 self.memory.push(state, action, next_state, reward)
-
                 # Move to the next state
                 state = next_state
-
                 # Perform one step of the optimization (on the policy network): note that
                 # it will return without doing nothing if we have not enough data to sample
-
                 if bool(OPTIMISATION):
                     if self.DOUBLE:
-                        self.optimize_double_dqn_model()
-                        pass
+                        self.optimize_double_dqn_model(episode_index)
                     else:
                         self.optimize_model()
-
+                # Log cumulative reward and loss continuisly
+                self.writer.add_scalar(
+                    "Train Cumulative Reward t",
+                    cumulative_reward[episode_index],
+                    tick_index + episode_index,
+                )
+                self.writer.add_scalar(
+                    "Train Cumulative Reward t'",
+                    cumulative_reward[episode_index] * -1,
+                    tick_index + episode_index,
+                )
                 if done:
                     break
 
             # Update the target network, copying all weights and biases of policy_net
-            if i_episode % self.TARGET_UPDATE == 0:
+            if episode_index % self.TARGET_UPDATE == 0:
                 self.target_net.load_state_dict(self.policy_net.state_dict())
 
-            
+            # Log cumulative reward and loss
+            self.writer.add_scalar(
+                "Train Cumulative Reward",
+                cumulative_reward[episode_index],
+                episode_index,
+            )
 
         def save_model():
             # save the model
@@ -424,6 +442,7 @@ class Agent:
         self.TRAINING = False
         cumulative_reward = [0 for t in range(len(env_test.data))]
         reward_list = [0 for t in range(len(env_test.data))]
+        true_values = [0 for t in range(len(env_test.data))]
 
         def load_policy():
             if model_name is None:
@@ -470,6 +489,10 @@ class Agent:
             # Select and perform an action
             action = self.select_action_tensor(state)
             reward, done, _ = env_test.step(action)
+
+            true_value = 1 if reward > 0 else (-1 if reward < 0 else 0)
+            true_values[t] = true_value
+            
             cumulative_reward[t] += (
                 reward.item() + cumulative_reward[t - 1 if t - 1 > 0 else 0]
             )
@@ -485,4 +508,4 @@ class Agent:
             if done:
                 break
 
-        return cumulative_reward, reward_list
+        return cumulative_reward, reward_list, true_values

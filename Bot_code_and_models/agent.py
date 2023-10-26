@@ -6,6 +6,9 @@ import numpy as np
 import random
 import os
 
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+
 from src.Agent import Agent
 from src.Environment import Environment
 from src.utils import (
@@ -28,18 +31,26 @@ TENSORBOARD_LOGS_DIR = os.getenv("TENSORBOARD_LOGS")
 SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
 TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
 
-TRADING_PERIOD = 4000
-TEST_SIMULATIONS = 3
-TRAIN_EPOCHS = 40
+TRADING_PERIOD = 1200
+TRAIN_EPOCHS = 1000
+TEST_SIMULATIONS = 10
+
 
 
 class RlPredictor:
     def __init__(self) -> None:
         self.double_dqn_agent = None
         self.df = self.init_data()
-        self.index = random.randrange(len(self.df) - TRADING_PERIOD - 5)
+        self.index = random.randrange(len(self.df
+                                          ) - TRADING_PERIOD - 5)
         self.train_size = int(TRADING_PERIOD * 0.8)
         self.profit_ddqn_return = []
+        
+        self.accuracy = []
+        self.recall = []
+        self.precision = []
+        self.f1 = []
+        
         self.init_agent()
         self.profit_train_env = None
         self.profit_test_env = None
@@ -53,7 +64,7 @@ class RlPredictor:
         return df
 
     def init_agent(self) -> Agent:
-        # hyperparams
+        # hyperparams 
         REPLAY_MEM_SIZE = 10000
         BATCH_SIZE = 40
         GAMMA = 0.98
@@ -107,7 +118,7 @@ class RlPredictor:
                 "profit",
             )
             # Profit Double DQN
-            self.double_dqn_agent_test, _ = self.double_dqn_agent.test(
+            self.double_dqn_agent_test, _, true_values = self.double_dqn_agent.test(
                 env_test=self.profit_test_env,
                 model_name="profit_reward_double_dqn_model",
                 path=model_filepath,
@@ -127,17 +138,14 @@ class RlPredictor:
 
             i = 0
             while i < TEST_SIMULATIONS:
-                # When we retry? # TODO: fix random to window...
+                # AGENT EVOLUTION HERE
                 index = random.randrange(len(self.df) - TRADING_PERIOD - 1)
-                print(f"Test nr. {str(i + 1)} for rand seed index: {index}")
-
-                # Test ENV
                 profit_test_env = Environment(
                     self.df[index + self.train_size : index + TRADING_PERIOD], "profit"
                 )
 
                 # Profit Double DQN
-                self.double_dqn_agent_test, _ = self.double_dqn_agent.test(
+                self.double_dqn_agent_test, _, true_values = self.double_dqn_agent.test(
                     profit_test_env,
                     model_name="profit_reward_double_dqn_model",
                     path=SAVED_MODEL_FILEPATH,
@@ -145,15 +153,36 @@ class RlPredictor:
 
                 # Comulative return for parallel bots
                 self.profit_ddqn_return.append(profit_test_env.cumulative_return)
-
                 avg_mean = sum(self.profit_ddqn_return[i]) / len(
                     self.profit_ddqn_return[i]
                 )
                 print(f"Reward for {i}", avg_mean)
                 profit_test_env.reset()
                 i += 1
-
                 self.writer.add_scalar("Agent Test End", avg_mean, i)
+
+                # Предположим, у вас есть список с истинными классами (1 - выигрыш, 0 - проигрыш)
+                # Предположим, у вас есть список с предсказанными классами (1 - предсказанный выигрыш, 0 - предсказанный проигрыш)
+                true_labels = true_values
+                profits_trues = [1 if x > 0 else 0 for x in true_values]
+                predicted_profits = [1 if x > 0 else 0 for x in self.profit_ddqn_return[i-1]]
+
+
+                # если правильное действие, то 1, если действие не правильное -1, 
+                accuracy = accuracy_score(predicted_profits, profits_trues)
+                precision = precision_score(predicted_profits, profits_trues)
+                recall = recall_score(predicted_profits, profits_trues)
+                f1 = f1_score(predicted_profits, profits_trues)
+
+                self.accuracy.append(accuracy)
+                self.precision.append(precision)
+                self.recall.append(recall)
+                self.f1.append(f1)
+
+                print("Accuracy:", accuracy)
+                print("Precision:", precision)
+                print("Recall:", recall)
+                print("F1 Score:", f1)
 
             # Reporting
             t = PrettyTable(
@@ -166,9 +195,21 @@ class RlPredictor:
                 ]
             )
 
-            print(i)
-            to_tensorboard = print_stats("ProfitDDQN", self.profit_ddqn_return, t)
-            print(t)
+            print('Iteration: ', i)
+            to_tensorboard = print_stats("ProfitDDQN (stats)", self.profit_ddqn_return, t)
+            print(t)            
+
+            ta = PrettyTable(
+                [
+                    "Trading System",
+                    "Avg. Accuracy (%)",
+                    "Max Accuracy (%)",
+                    "Min Accuracy (%)",
+                    "Std. Dev.",
+                ]
+            )
+            to_tensorboard = print_stats("ProfitDDQN (accuracy)", self.accuracy, ta)
+            print(ta)
 
             mean1 = to_tensorboard.get("mean")
             max1 = to_tensorboard.get("max")
@@ -180,6 +221,7 @@ class RlPredictor:
             self.writer.add_scalar("Max Return (%)", max1, timestamp_now)
             self.writer.add_scalar("Min Return (%)", min1, timestamp_now)
             self.writer.add_scalar("Std. Dev", std1, timestamp_now)
+
             # plot_multiple_conf_interval()
             # os.remove(MODEL_FILEPATH)
             # while os.path.isfile(path=SAVED_MODEL_FILEPATH):

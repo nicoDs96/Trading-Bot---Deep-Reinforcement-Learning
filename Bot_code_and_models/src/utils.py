@@ -30,24 +30,24 @@ class ReplayMemory(object):
         return len(self.memory)
 
 
-def print_stats(model, c_return, t):
-    c_return = np.array(c_return).flatten()
+def print_stats(model, value, t):
+    value = np.array(value).flatten()
     t.add_row(
         [
             str(model),
-            "%.2f" % np.mean(c_return),
-            "%.2f" % np.amax(c_return),
-            "%.2f" % np.amin(c_return),
-            "%.2f" % np.std(c_return),
+            "%.2f" % np.mean(value),
+            "%.2f" % np.amax(value),
+            "%.2f" % np.amin(value),
+            "%.2f" % np.std(value),
             # TODO: more information
         ]
     )
 
     return {
-        "mean": np.mean(c_return),
-        "max": np.amax(c_return),
-        "min": np.amin(c_return),
-        "std": np.std(c_return),
+        "mean": np.mean(value),
+        "max": np.amax(value),
+        "min": np.amin(value),
+        "std": np.std(value),
         # TODO: more information
     }
 
