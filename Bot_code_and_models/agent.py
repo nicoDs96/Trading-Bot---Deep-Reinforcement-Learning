@@ -31,9 +31,9 @@ TENSORBOARD_LOGS_DIR = os.getenv("TENSORBOARD_LOGS")
 SAVED_MODEL_FILEPATH = os.getenv("TORCH_MODEL_FILEPATH")
 TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
 
-TRADING_PERIOD = 1200
-TRAIN_EPOCHS = 1000
-TEST_SIMULATIONS = 10
+TRADING_PERIOD = 600
+TRAIN_EPOCHS = 20000
+TEST_SIMULATIONS = 1000
 
 
 
@@ -201,7 +201,7 @@ class RlPredictor:
 
             ta = PrettyTable(
                 [
-                    "Trading System",
+                    "Metrics",
                     "Avg. Accuracy (%)",
                     "Max Accuracy (%)",
                     "Min Accuracy (%)",
