@@ -6,6 +6,9 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import datetime
+
+from src.Loader import load_to_memory, get_date_before
 
 Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
 
@@ -156,3 +159,30 @@ def load_data(filepath=None, timerange=None):
         raise Exception("WE NEED FILE!!!!")
 
     return df
+
+def load_data_ram():
+    ticker = 'BTC/USDT'
+    timeframe = '1m'
+    exchange = 'binance'
+    date_one_day_ago = get_date_before(0)
+    data, last_tick = load_to_memory(
+        exchange_id=exchange,
+        max_retries=10,
+        symbol=ticker,
+        timeframe=timeframe,
+        since=date_one_day_ago,
+        limit=1000        
+    )
+
+    # Convert milliseconds timestamp to seconds
+    timestamp_seconds = last_tick / 1000
+
+    # Convert to a datetime object
+    datetime_obj = datetime.datetime.utcfromtimestamp(timestamp_seconds)
+
+    # Format the datetime object as a string
+    formatted_time = datetime_obj.strftime('%Y-%m-%d %H:%M:%S')
+
+    print('Last server tick', formatted_time)
+
+    return data, last_tick

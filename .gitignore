@@ -8,3 +8,4 @@ Bot_code_and_models/logs/*
 **.csv**
 **tfevents**
 Bot_code_and_models/.env
+Bot_code_and_models/.env
