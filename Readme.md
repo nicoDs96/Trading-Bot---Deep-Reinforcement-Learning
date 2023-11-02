@@ -1,6 +1,6 @@
 # A Deep Reinforcement Learning Trading Bot
 
-If you interested in RL and this project you can get more research information [here](summary.ipynb).
+If you interested in RL and this project you can get more research information [here](docs/summary.ipynb).
 
 # Dependencies 
 Dependecies:    
@@ -25,3 +25,5 @@ To Run Pretrained Models:
 To Run Train and Test:
 * `python train_test.py`
 
+# Link to test datastream:
+https://perp.pancakeswap.finance/en/futures/v2/BTCUSD?theme=dark&chain=bsc

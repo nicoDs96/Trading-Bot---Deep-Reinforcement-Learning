@@ -7,6 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import datetime
+import sys
+import time
 
 from src.Loader import load_to_memory, get_date_before
 
@@ -33,7 +35,7 @@ class ReplayMemory(object):
         return len(self.memory)
 
 
-def print_stats(model, value, t):
+def print_stats(model: str, value: list[float], t = None):
     value = np.array(value).flatten()
     t.add_row(
         [
@@ -183,6 +185,48 @@ def load_data_ram():
     # Format the datetime object as a string
     formatted_time = datetime_obj.strftime('%Y-%m-%d %H:%M:%S')
 
-    print('Last server tick', formatted_time)
+    print('Last server tick', formatted_time, 'with `Close` price', data.iloc[-1, :]["Close"])
 
     return data, last_tick
+
+def clean_loader():
+    sys.stdout.write("\r")
+    sys.stdout.flush()
+
+def show_loader():
+    # Define a list of rotating characters
+    loader_chars = ['-', '\\', '|', '/']
+
+    # Initialize the index of the current character
+    char_index = 0
+
+    for _ in range(len(loader_chars)):
+        # Print the current character without a newline
+        sys.stdout.write("\r" + loader_chars[char_index])
+        sys.stdout.flush()
+
+        # Sleep for a short time to control the animation speed
+        time.sleep(0.1)
+
+        # Move to the next character
+        char_index = (char_index + 1) % len(loader_chars)
+
+
+def demo_wait_tick(last_tick):
+        # Get the current timestamp in seconds
+        current_timestamp = time.time()
+        time.sleep(0.1)
+
+        # Convert the given timestamp (last_tick) to seconds
+        timestamp_seconds = last_tick / 1000
+
+        # Convert to a datetime object
+        last_tick_datetime = datetime.datetime.utcfromtimestamp(timestamp_seconds)
+        current_datetime = datetime.datetime.utcfromtimestamp(current_timestamp)
+
+        # Format the datetime objects as strings
+        formatted_last_tick = last_tick_datetime.strftime("%Y-%m-%d %H:%M")
+        formatted_current = current_datetime.strftime("%Y-%m-%d %H:%M")
+
+        is_need_wait = formatted_last_tick == formatted_current
+        return is_need_wait

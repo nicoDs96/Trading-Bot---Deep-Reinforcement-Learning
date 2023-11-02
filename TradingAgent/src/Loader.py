@@ -11,21 +11,26 @@ from datetime import datetime, timedelta
 root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(""))))
 sys.path.append(root + "/python")
 
+VERBOSE = "minimal"
+
 
 def retry_fetch_ohlcv(exchange, max_retries, symbol, timeframe, since, limit):
     num_retries = 0
     try:
         num_retries += 1
         ohlcv = exchange.fetch_ohlcv(symbol, timeframe, since, limit)
-        print(
-            "Fetched",
-            len(ohlcv),
-            symbol,
-            "candles from",
-            exchange.iso8601(ohlcv[0][0]),
-            "to",
-            exchange.iso8601(ohlcv[-1][0]),
-        )
+        if VERBOSE == "minimal":
+            pass
+        else:
+            print(
+                "Fetched",
+                len(ohlcv),
+                symbol,
+                "candles from",
+                exchange.iso8601(ohlcv[0][0]),
+                "to",
+                exchange.iso8601(ohlcv[-1][0]),
+            )
         return ohlcv
     except Exception:
         if num_retries > max_retries:
@@ -82,19 +87,21 @@ def load_to_memory(exchange_id, max_retries, symbol, timeframe, since, limit):
         since = exchange.parse8601(since)
     exchange.load_markets()
     ohlcv = scrape_ohlcv(exchange, max_retries, symbol, timeframe, since, limit)
-    print(
-        "Loaded",
-        len(ohlcv),
-        "candles from",
-        exchange.iso8601(ohlcv[0][0]),
-        "to",
-        exchange.iso8601(ohlcv[-1][0]),
-    )
+    if not VERBOSE == "minimal":
+        print(
+            "Loaded",
+            len(ohlcv),
+            "candles from",
+            exchange.iso8601(ohlcv[0][0]),
+            "to",
+            exchange.iso8601(ohlcv[-1][0]),
+        )
     # Переименуйте столбцы
     df = pd.DataFrame(
         ohlcv, columns=["Timestamp", "Open", "High", "Low", "Close", "Volume"]
     )
     # df = df.drop('Timestamp', axis=1)
+    print("Loaded ohlcv:", df.shape)
     return df, ohlcv[-1][0]
 
 
