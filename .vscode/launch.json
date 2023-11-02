@@ -9,6 +9,10 @@
             "type": "python",
             "request": "launch",
             "program": "TradingAgent/agent.py",
+            "autoReload": {
+                "enabled": true
+            },
+            "cwd": "${workspaceFolder}",
             "console": "integratedTerminal",
             "justMyCode": true
         }

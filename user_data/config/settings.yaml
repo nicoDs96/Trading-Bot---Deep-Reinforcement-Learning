@@ -1,7 +1,20 @@
 # TODO: Add your own settings here
-# default data 
-commision: 0.01
-stoploss: 0.01
-takeprofit: 0.01
-riskrewardratio: 1.5
-monitoring: true
+# default settings
+# ... add your own settings here ...
+symbol: BTC/USDT
+sides:
+  buy: true
+  sell: true
+accuracy: 0.55
+trade:
+  commision: 0.01
+  stoploss: 0.015
+  takeprofit: 0.01
+  riskrewardratio: 1.5
+monitoring: 
+  enabled: true
+  interval: 300
+telegram:
+  token: ""
+  chat_id: ""
+  admin_chat_id: ""

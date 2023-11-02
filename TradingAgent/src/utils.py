@@ -162,15 +162,12 @@ def load_data(filepath=None, timerange=None):
 
     return df
 
-def load_data_ram(days=100):
-    ticker = 'BTC/USDT'
-    timeframe = '1m'
-    exchange = 'binance'
+def load_data_ram(days=100, symbol="BTC/USDT", timeframe="1m", exchange="binance"):
     date_one_day_ago = get_date_before(days)
     data, last_tick = load_to_memory(
         exchange_id=exchange,
         max_retries=10,
-        symbol=ticker,
+        symbol=symbol,
         timeframe=timeframe,
         since=date_one_day_ago,
         limit=1000        

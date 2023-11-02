@@ -1,26 +1,25 @@
-from prettytable import PrettyTable as PrettyTable
-from time import time
-from datetime import datetime
-import pandas as pd
-import numpy as np
-import random
 import os
+import pandas as pd
+import random
+from datetime import datetime
 
+
+from tensorboardX import SummaryWriter
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-
+from prettytable import PrettyTable as PrettyTable
 
 from src.Agent import Agent
 from src.Environment import Environment
 from src.utils import (
     load_data,
     print_stats,
-    plot_multiple_conf_interval,
-    plot_conf_interval,
     load_data_ram,
 )
 from dotenv import load_dotenv
+from src.Config import settings
 
-from tensorboardX import SummaryWriter
+from src.Database import send_signal
+import asyncio
 
 
 # to yaml / .env config [w4]
@@ -34,41 +33,67 @@ TRAIN_DATA_FILEPATH = os.getenv("TRAIN_FILEPATH")
 
 TRADING_PERIOD = 600
 TRAIN_EPOCHS = 20000
-TEST_SIMULATIONS = 1000
+TRAIN_DAYS = 365
 
-DEMO_ITERATIONS = 600
+TEST_SIMULATIONS = 1000
+TEST_APPROVE_ACCURACY = 0.6
+
+DEMO_PRELOAD_DAYS = 0  # 0 - current last 1000 candles
+DEMO_ITERATIONS = 100
 DEMO_CLIENTS = 1
 
+SYMBOL = "BTC/USDT"
+TIMEFRAME = "1m"
+EXCHANGE = "binance"
 
-class RlPredictor:
-    def __init__(self) -> None:
+
+class RlEcAg_Predictor:
+    def __init__(self, demo: bool = False) -> None:
+        # demo trade
+        self.demo = demo
+
+        # agent
         self.double_dqn_agent = None
-        self.df = self.init_data()
+
+        # train & test params
+        self.df = self.init_data(ticker=SYMBOL, timeframe=TIMEFRAME, exchange=EXCHANGE)
         self.index = random.randrange(len(self.df) - TRADING_PERIOD - 5)
         self.train_size = int(TRADING_PERIOD * 0.8)
-        self.profit_ddqn_return = []
 
+        # enviroments & angets
+        self.init_e_agent()
+        self.profit_train_env = None
+        self.profit_test_env = None
+
+        # metrics
+        self.profit_ddqn_return = []
         self.accuracy = []
         self.recall = []
         self.precision = []
         self.f1 = []
 
-        self.init_agent()
-        self.profit_train_env = None
-        self.profit_test_env = None
+        # tensorboard
         self.writer = SummaryWriter(
             log_dir=TENSORBOARD_LOGS_DIR
         )  # You can customize the log directory
 
-    def init_data(self, remote=True) -> pd.DataFrame:
+
+
+    def init_data(self, ticker, timeframe, exchange, remote=True) -> pd.DataFrame:
         # it can be replace for train data loader from open api or ccxt
         if not remote:
+            # load from local file
             df = load_data(TRAIN_DATA_FILEPATH)
         else:
-            df, last_tick = load_data_ram()
+            df, last_tick = load_data_ram(
+                days=DEMO_PRELOAD_DAYS,
+                symbol=ticker,
+                timeframe=timeframe,
+                exchange=exchange,
+            )
         return df
 
-    def init_agent(self) -> Agent:
+    def init_e_agent(self) -> Agent:
         # hyperparams
         REPLAY_MEM_SIZE = 10000
         BATCH_SIZE = 40
@@ -97,13 +122,16 @@ class RlPredictor:
             MODEL="dqn",
             DOUBLE=True,
         )
-        self.remote = True
+        if self.demo:
+            self.remote = True
+        else:
+            self.remote = False
 
     def init_env(self) -> None:
-        model_filepath = SAVED_MODEL_FILEPATH  # os.path.join(models_path, "profit_reward_double_dqn_model")
+        model_filepath = SAVED_MODEL_FILEPATH
         print(f"search model in {model_filepath}")
         Train = not os.path.isfile(path=model_filepath)
-        print("pretrainded model not exist:", Train)
+        print("need train (pretrainded model not exist):", 'yes' if Train else 'no')
 
         # For not ready model
         if Train:
@@ -152,6 +180,7 @@ class RlPredictor:
                     profit_test_env = Environment(
                         self.df[index + self.train_size : index + TRADING_PERIOD],
                         "profit",
+                        remote=False,
                     )
 
                     # Profit Double DQN
@@ -255,7 +284,9 @@ class RlPredictor:
                 self.profit_ddqn_return = []
 
                 # load env data
-                profit_demo_env = Environment(self.df, "profit", remote=True)
+                profit_demo_env = Environment(
+                    self.df, "profit", remote=True, days=DEMO_PRELOAD_DAYS
+                )
 
                 (
                     self.double_dqn_agent_test,
@@ -266,6 +297,7 @@ class RlPredictor:
                     model_name="profit_reward_double_dqn_model",
                     path=SAVED_MODEL_FILEPATH,
                     steps=DEMO_ITERATIONS,
+                    fn_signal=send_signal,
                 )
 
                 print(profit_demo_env.cumulative_return)
@@ -354,7 +386,7 @@ class RlPredictor:
 
 if __name__ == "__main__":
     # init agent
-    agent_predictions = RlPredictor()
+    agent_predictions = RlEcAg_Predictor(demo=True)
     # pipeline
     # agent_predictions.trade_train_test()
     # production

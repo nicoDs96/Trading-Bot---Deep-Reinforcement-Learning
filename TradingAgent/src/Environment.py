@@ -1,14 +1,11 @@
 import torch
-import numpy as np
-import datetime
-import time
 from src.utils import load_data_ram, show_loader, clean_loader, demo_wait_tick
 
 COMMISION = 0.0
 
 # TODO: modify the reward st. we can choose between sharpe ratio reward or profit reward as shown in the paper.
 class Environment:
-    def __init__(self, data, reward, remote=False):
+    def __init__(self, data, reward, remote=False, days=14):
         """
         Creates the environment. Note: Before using the environment you must call
         the Environment.reset() method.
@@ -27,6 +24,7 @@ class Environment:
         self.action_number = 0
         self.demo_iterations = 120
         self.last_price = None
+        self.days = days
 
     def reset(self):
         """
@@ -55,7 +53,7 @@ class Environment:
         Environment.step() it will return the next state.
         """
         if self.remote:
-            self.data, self.demo_last_tick = load_data_ram()
+            self.data, self.demo_last_tick = load_data_ram(self.days)
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         if not self.done:
@@ -169,7 +167,7 @@ class Environment:
         reward = 0
         # GET CURRENT STATE
         if self.remote:
-            self.data, last_tick = load_data_ram()
+            self.data, last_tick = load_data_ram(self.days)
             state = self.data.iloc[-1, :]["Close"]
             self.last_price = state
             print("Updated data for last tick:", last_tick, "last price:", state)

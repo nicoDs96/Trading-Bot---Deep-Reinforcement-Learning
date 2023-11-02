@@ -1,5 +1,6 @@
 from torch import nn
 
+
 # Definition of the netwroks
 class DQN(nn.Module):
     # Deep Q Network
@@ -54,6 +55,7 @@ class DuelingDQN(nn.Module):
 
 # Convolutional DQN
 
+
 # Definition of the netwroks
 class DQN(nn.Module):
     # Deep Q Network
@@ -65,13 +67,12 @@ class DQN(nn.Module):
             nn.LeakyReLU(),
             nn.Linear(hidden_size, hidden_size),
             nn.LeakyReLU(),
-            nn.Linear(hidden_size, actions_n)
+            nn.Linear(hidden_size, actions_n),
         )
 
     def forward(self, x):
         h = self.fc_val(x)
         return h
-
 
 
 class DuelingDQN(nn.Module):
@@ -95,7 +96,7 @@ class DuelingDQN(nn.Module):
         self.advantage_stream = nn.Sequential(
             nn.Linear(hidden_size, hidden_size),
             nn.LeakyReLU(),
-            nn.Linear(hidden_size, actions_n)
+            nn.Linear(hidden_size, actions_n),
         )
 
     def forward(self, state):
@@ -118,8 +119,15 @@ class ConvDQN(nn.Module):
         self.LRelu = nn.LeakyReLU()
         self.conv2 = nn.Conv1d(n_filters, n_filters, kernel_size // 2)
 
-        self.hidden_dim = n_filters * ((((
-                                                     seq_len_in - kernel_size + 1) - max_pool_kernel + 1) - kernel_size // 2 + 1) - max_pool_kernel + 1)
+        self.hidden_dim = n_filters * (
+            (
+                ((seq_len_in - kernel_size + 1) - max_pool_kernel + 1)
+                - kernel_size // 2
+                + 1
+            )
+            - max_pool_kernel
+            + 1
+        )
 
         self.out_layer = nn.Linear(self.hidden_dim, actions_n)
 
@@ -146,8 +154,8 @@ class ConvDuelingDQN(nn.Module):
         n_filters = 64
         max_pool_kernel = 2
         self.conv1 = nn.Conv1d(1, n_filters, kernel_size)
-        self.maxPool = nn.MaxPool1d(max_pool_kernel, stride=1)
-        self.LRelu = nn.LeakyReLU()
+        self.max_pool = nn.MaxPool1d(max_pool_kernel, stride=1)
+        self.leaky_relu = nn.LeakyReLU()
         self.conv2 = nn.Conv1d(n_filters, n_filters, kernel_size // 2)
         self.hidden_dim = n_filters * (
             (
@@ -163,13 +171,13 @@ class ConvDuelingDQN(nn.Module):
 
         self.value_stream = nn.Sequential(
             nn.Linear(paper_hidden_dim, paper_hidden_dim),
-            nn.LeakyReLU(),
+            self.leaky_relu,
             nn.Linear(paper_hidden_dim, 1),
         )
 
         self.advantage_stream = nn.Sequential(
             nn.Linear(paper_hidden_dim, paper_hidden_dim),
-            nn.LeakyReLU(),
+            self.leaky_relu,
             nn.Linear(paper_hidden_dim, actions_n),
         )
 
@@ -178,14 +186,8 @@ class ConvDuelingDQN(nn.Module):
         max_pool_1 = self.maxPool(self.LRelu(c1_out))
         c2_out = self.conv2(max_pool_1)
         max_pool_2 = self.maxPool(self.LRelu(c2_out))
-        # DEBUG code:
-        #    print("c1_out:\t%s"%str(c1_out.shape))
-        #    print("max_pool_1:\t%s"%str(max_pool_1.shape))
-        #    print("c2_out:\t%s"%str(c2_out.shape))
-        #    print("max_pool_2:\t%s"%str(max_pool_2.shape))
 
         max_pool_2 = max_pool_2.view(-1, self.hidden_dim)
-        #    print("max_pool_2_view:\t%s"%str(max_pool_2.shape))
 
         split = self.split_layer(max_pool_2)
         values = self.value_stream(split)

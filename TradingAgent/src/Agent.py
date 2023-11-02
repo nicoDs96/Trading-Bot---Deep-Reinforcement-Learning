@@ -3,7 +3,7 @@ import torch.optim as optim
 import torch.nn.functional as F
 from tensorboardX import SummaryWriter
 from src.Environment import Environment
-from src.models import ConvDQN, ConvDuelingDQN
+from src.models.dqns import ConvDQN, ConvDuelingDQN
 from src.utils import ReplayMemory
 from src.utils import Transition
 import random
@@ -519,7 +519,7 @@ class Agent:
     def load_weights(self, path):
         pass
 
-    def demo(self, env_demo: Environment, model_name=None, path=None, steps=100):
+    def demo(self, env_demo: Environment, model_name=None, path=None, steps=100, fn_signal = None):
         cumulative_reward = [0 for t in range(len(env_demo.data))]
         reward_list = [0 for t in range(len(env_demo.data))]
         true_values = [0 for t in range(len(env_demo.data))]
@@ -532,9 +532,10 @@ class Agent:
         ):  
             print('>>> tick:', step)
             # Select and perform an action
-            state = env_demo.get_state()     
+            state = env_demo.get_state()    
             action = self.select_action_tensor(state)
             reward, done, _ = env_demo.step(action, state)
+
 
             # Collect reward and true value
             true_value = 1 if reward > 0 else (-1 if reward < 0 else 0)
@@ -551,6 +552,12 @@ class Agent:
                 true_value, 
                 env_demo.agent_positions
                 )
+            
+            if fn_signal is not None:
+                import asyncio
+                import json
+                asyncio.run(fn_signal(json.dumps(vector)))
+
             print('exit state:')
             pprint(vector)
 
