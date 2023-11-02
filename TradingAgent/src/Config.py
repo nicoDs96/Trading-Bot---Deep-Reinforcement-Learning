@@ -1,7 +1,7 @@
 import os
 import dotenv
 
-dotenv.load_dotenv('/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/Bot_code_and_models/.env')
+dotenv.load_dotenv('../.env')
 
 HOST = os.getenv("DB_HOST")
 PORT = os.getenv("DB_PORT")

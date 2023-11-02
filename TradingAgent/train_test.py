@@ -2,11 +2,9 @@ from prettytable import PrettyTable as PrettyTable
 import random
 import warnings
 
-# from google.colab import drive
-# drive.mount('/content/drive')
 from src.Environment import Environment
 from src.Agent import Agent
-from src.utils import load_data, print_stats, plot_multiple_conf_interval
+from src.utils import load_data, print_stats, plot_multiple_conf_interval, load_data_ram
 
 
 ################## INFORMATION ######################
@@ -15,9 +13,10 @@ from src.utils import load_data, print_stats, plot_multiple_conf_interval
 
 def main():
     # ----------------------------- LOAD DATA ---------------------------------------------------------------------------
-    data_path = "./input/"
-    models_path = "./models/"
-    df = load_data(data_path)
+    data_path = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/user_data/input"
+    models_path = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/user_data/models/prod"
+    df, last_tick = load_data_ram(days=14)
+    print('tain on: ', last_tick)
 
     # ----------------------------- AGENTS COMPARISON --------------------------------
     REPLAY_MEM_SIZE = 10000
@@ -31,8 +30,8 @@ def main():
     HIDDEN_DIM = 120
     ACTION_NUMBER = 3
     TARGET_UPDATE = 10
-    N_TEST = 30
-    TRADING_PERIOD = 12000
+    N_TEST = 10
+    TRADING_PERIOD = 2000
     index = random.randrange(len(df) - TRADING_PERIOD - 1)
 
     dqn_agent = Agent(

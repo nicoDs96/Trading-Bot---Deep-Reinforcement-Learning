@@ -8,7 +8,7 @@ COMMISION = 0.0
 
 # TODO: modify the reward st. we can choose between sharpe ratio reward or profit reward as shown in the paper.
 class Environment:
-    def __init__(self, data, reward, remote=True):
+    def __init__(self, data, reward, remote=False):
         """
         Creates the environment. Note: Before using the environment you must call
         the Environment.reset() method.
@@ -122,13 +122,15 @@ class Environment:
             if act == 0:  # Do Nothing
                 pass
 
-            print_action()
+            if self.remote:
+                print_action()
 
             # BUY
             if act == 1:
                 # TODO: integration
                 self.agent_positions.append(state)
-                print("Add position: ", state, "at", self.action_number)
+                if self.remote:
+                    print("Add position: ", state, "at", self.action_number)
 
             # SELL
             if act == 2:
@@ -148,8 +150,9 @@ class Environment:
                     self.profits[self.action_number] = profits
 
                 if len(self.agent_positions) > 0:
-                    print("Sell position:", state, "at", self.action_number)
-                    print("Profits: ", profits)
+                    if self.remote:
+                        print("Sell position:", state, "at", self.action_number)
+                        print("Profits: ", profits)
                     self.agent_positions = []                    
                 else:
                     pass
@@ -207,10 +210,11 @@ class Environment:
             reward = -5
 
         # TODO: extract it in utils
-        print('.........')
-        print('Profit: ', sum(self.profits))
-        print('Value:', self.agent_open_position_value)
-        print('.........')
+        if self.remote:
+            print('.........')
+            print('Profit: ', sum(self.profits))
+            print('Value:', self.agent_open_position_value)
+            print('.........')
 
         # UPDATE THE STATE FOR NEXT TICK
         # TODO: solve remote or not attribute for demo

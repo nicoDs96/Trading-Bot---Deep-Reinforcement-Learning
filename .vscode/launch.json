@@ -8,7 +8,7 @@
             "name": "XAT",
             "type": "python",
             "request": "launch",
-            "program": "Bot_code_and_models/agent.py",
+            "program": "TradingAgent/agent.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }

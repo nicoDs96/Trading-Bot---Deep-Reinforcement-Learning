@@ -2,24 +2,21 @@ from prettytable import PrettyTable as PrettyTable
 import random
 import os
 
-# from google.colab import drive
-# drive.mount('/content/drive')
 from src.Environment import Environment
 from src.Agent import Agent
 from src.utils import load_data, print_stats, plot_multiple_conf_interval
 
 ################## INFORMATION ######################
-### THIS FILE FOR MODELS LEADERBORS PRINTING ########
+### THIS FILE FOR MODELS LEADERBORS TESTING ########
 #####################################################
 
-
-def main():
-    # ----------------------------- LOAD DATA ---------------------------------------------------------------------------
-    data_path = "Bot_code_and_models/input/"
-    models_path = "Bot_code_and_models/models/"
+def hypertune():
+    # TODO: now it is test leaderboard and we need to make it more profitable after trainning (genetics algorithm)
+    data_path = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/user_data/input/labeled_df.csv"
+    models_path = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/user_data/models/prod/profit_reward_double_ddqn_model"
+ 
     df = load_data(data_path)
 
-    # ----------------------------- AGENTS COMPARISON --------------------------------
     REPLAY_MEM_SIZE = 10000
     BATCH_SIZE = 40
     GAMMA = 0.98
@@ -116,14 +113,14 @@ def main():
         )
 
         # ProfitDQN
-        cr_profit_dqn_test, _ = dqn_agent.test(
+        cr_profit_dqn_test, _, y = dqn_agent.test(
             profit_test_env, model_name="profit_reward_dqn_model", path=models_path
         )
         profit_dqn_return.append(profit_test_env.cumulative_return)
         profit_test_env.reset()
 
         # Profit Double DQN
-        cr_profit_ddqn_test, _ = double_dqn_agent.test(
+        cr_profit_ddqn_test, _, y = double_dqn_agent.test(
             profit_test_env,
             model_name="profit_reward_double_dqn_model",
             path=models_path,
@@ -273,4 +270,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    hypertune()

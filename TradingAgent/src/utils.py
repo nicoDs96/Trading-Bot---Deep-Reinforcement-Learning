@@ -158,15 +158,15 @@ def load_data(filepath=None, timerange=None):
         df = pd.read_csv(filepath)
         print("Shape of aggregated dataset:", df.shape)
     else:
-        raise Exception("WE NEED FILE!!!!")
+        raise Exception(f"{filepath} ???? Not found!")
 
     return df
 
-def load_data_ram():
+def load_data_ram(days=100):
     ticker = 'BTC/USDT'
     timeframe = '1m'
     exchange = 'binance'
-    date_one_day_ago = get_date_before(0)
+    date_one_day_ago = get_date_before(days)
     data, last_tick = load_to_memory(
         exchange_id=exchange,
         max_retries=10,
