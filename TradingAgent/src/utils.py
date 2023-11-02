@@ -35,7 +35,7 @@ class ReplayMemory(object):
         return len(self.memory)
 
 
-def print_stats(model: str, value: list[float], t = None):
+def print_stats(model: str, value: list[float], t=None):
     value = np.array(value).flatten()
     t.add_row(
         [
@@ -162,6 +162,7 @@ def load_data(filepath=None, timerange=None):
 
     return df
 
+
 def load_data_ram(days=100, symbol="BTC/USDT", timeframe="1m", exchange="binance"):
     date_one_day_ago = get_date_before(days)
     data, last_tick = load_to_memory(
@@ -170,7 +171,7 @@ def load_data_ram(days=100, symbol="BTC/USDT", timeframe="1m", exchange="binance
         symbol=symbol,
         timeframe=timeframe,
         since=date_one_day_ago,
-        limit=1000        
+        limit=1000,
     )
 
     # Convert milliseconds timestamp to seconds
@@ -180,19 +181,26 @@ def load_data_ram(days=100, symbol="BTC/USDT", timeframe="1m", exchange="binance
     datetime_obj = datetime.datetime.utcfromtimestamp(timestamp_seconds)
 
     # Format the datetime object as a string
-    formatted_time = datetime_obj.strftime('%Y-%m-%d %H:%M:%S')
+    formatted_time = datetime_obj.strftime("%Y-%m-%d %H:%M:%S")
 
-    print('Last server tick', formatted_time, 'with `Close` price', data.iloc[-1, :]["Close"])
+    print(
+        "Last server tick",
+        formatted_time,
+        "with `Close` price",
+        data.iloc[-1, :]["Close"],
+    )
 
     return data, last_tick
+
 
 def clean_loader():
     sys.stdout.write("\r")
     sys.stdout.flush()
 
+
 def show_loader():
     # Define a list of rotating characters
-    loader_chars = ['-', '\\', '|', '/']
+    loader_chars = ["-", "\\", "|", "/"]
 
     # Initialize the index of the current character
     char_index = 0
@@ -210,20 +218,31 @@ def show_loader():
 
 
 def demo_wait_tick(last_tick):
-        # Get the current timestamp in seconds
-        current_timestamp = time.time()
-        time.sleep(0.1)
+    # Get the current timestamp in seconds
+    current_timestamp = time.time()
+    time.sleep(0.1)
 
-        # Convert the given timestamp (last_tick) to seconds
-        timestamp_seconds = last_tick / 1000
+    # Convert the given timestamp (last_tick) to seconds
+    timestamp_seconds = last_tick / 1000
 
-        # Convert to a datetime object
-        last_tick_datetime = datetime.datetime.utcfromtimestamp(timestamp_seconds)
-        current_datetime = datetime.datetime.utcfromtimestamp(current_timestamp)
+    # Convert to a datetime object
+    last_tick_datetime = datetime.datetime.utcfromtimestamp(timestamp_seconds)
+    current_datetime = datetime.datetime.utcfromtimestamp(current_timestamp)
 
-        # Format the datetime objects as strings
-        formatted_last_tick = last_tick_datetime.strftime("%Y-%m-%d %H:%M")
-        formatted_current = current_datetime.strftime("%Y-%m-%d %H:%M")
+    # Format the datetime objects as strings
+    formatted_last_tick = last_tick_datetime.strftime("%Y-%m-%d %H:%M")
+    formatted_current = current_datetime.strftime("%Y-%m-%d %H:%M")
 
-        is_need_wait = formatted_last_tick == formatted_current
-        return is_need_wait
+    is_need_wait = formatted_last_tick == formatted_current
+    return is_need_wait
+
+
+def print_action(act: int, agent_positions: list = []):
+    if act == 0:
+        print("Stay...")
+    if act == 1:
+        print("Buy...")
+    if act == 2 and len(agent_positions) > 0:
+        print("Sell...")
+    else:
+        pass

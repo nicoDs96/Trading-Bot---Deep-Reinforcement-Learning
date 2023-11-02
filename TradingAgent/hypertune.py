@@ -10,11 +10,12 @@ from src.utils import load_data, print_stats, plot_multiple_conf_interval
 ### THIS FILE FOR MODELS LEADERBORS TESTING ########
 #####################################################
 
+
 def hypertune():
     # TODO: now it is test leaderboard and we need to make it more profitable after trainning (genetics algorithm)
     data_path = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/user_data/input/labeled_df.csv"
     models_path = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/user_data/models/prod/profit_reward_double_ddqn_model"
- 
+
     df = load_data(data_path)
 
     REPLAY_MEM_SIZE = 10000

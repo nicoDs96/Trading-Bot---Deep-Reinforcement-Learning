@@ -77,8 +77,6 @@ class RlEcAg_Predictor:
             log_dir=TENSORBOARD_LOGS_DIR
         )  # You can customize the log directory
 
-
-
     def init_data(self, ticker, timeframe, exchange, remote=True) -> pd.DataFrame:
         # it can be replace for train data loader from open api or ccxt
         if not remote:
@@ -131,7 +129,7 @@ class RlEcAg_Predictor:
         model_filepath = SAVED_MODEL_FILEPATH
         print(f"search model in {model_filepath}")
         Train = not os.path.isfile(path=model_filepath)
-        print("need train (pretrainded model not exist):", 'yes' if Train else 'no')
+        print("need train (pretrainded model not exist):", "yes" if Train else "no")
 
         # For not ready model
         if Train:

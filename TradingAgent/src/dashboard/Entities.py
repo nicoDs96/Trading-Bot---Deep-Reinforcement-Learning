@@ -1,15 +1,22 @@
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import Column, Integer, String, Float
 from sqlalchemy.ext.declarative import declarative_base
-from src.dashboard.connection import engine
+
+try:
+    from src.dashboard.connection import engine
+except Exception as E:
+    from connection import engine
 
 Base = declarative_base()
+
 
 class Balance(Base):
     __tablename__ = "balances"
     __table_args__ = {"schema": "ml"}
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)    
+    name = Column(String, index=True)
+    profit = Column(Float, required=True)
+    volume = Column(Float, required=True)
 
 
 class Signal(Base):
@@ -19,6 +26,7 @@ class Signal(Base):
     # todo: action with state
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, index=True)
+
 
 class ComulativeReturn(Base):
     __tablename__ = "cumulative_return"
@@ -36,4 +44,7 @@ class Item(Base):
     name = Column(String, index=True)
 
 
+recreate = False
+if recreate:
+    Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)

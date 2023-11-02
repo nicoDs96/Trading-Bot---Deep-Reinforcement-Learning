@@ -11,12 +11,15 @@ from src.utils import load_data, print_stats, plot_multiple_conf_interval, load_
 ### THIS FILE FOR MODELS LEADERBORS TRAINING ########
 #####################################################
 
+
 def main():
     # ----------------------------- LOAD DATA ---------------------------------------------------------------------------
-    data_path = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/user_data/input"
+    data_path = (
+        "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/user_data/input"
+    )
     models_path = "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/user_data/models/prod"
     df, last_tick = load_data_ram(days=14)
-    print('tain on: ', last_tick)
+    print("tain on: ", last_tick)
 
     # ----------------------------- AGENTS COMPARISON --------------------------------
     REPLAY_MEM_SIZE = 10000

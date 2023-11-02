@@ -125,7 +125,9 @@ class Agent:
 
         # Log the epsilon value
         if not self.remote:
-            self.writer.add_scalar("Select Action Epsilon", eps_threshold, self.steps_done)
+            self.writer.add_scalar(
+                "Select Action Epsilon", eps_threshold, self.steps_done
+            )
 
         self.steps_done += 1
         # [Exploitation] pick the best action according to current Q approx.
@@ -296,7 +298,6 @@ class Agent:
         self.writer.add_scalar("= RMSE_loss", rmse, self.steps_done + episode_index)
         self.writer.add_scalar("= L1_loss", l1_loss, self.steps_done + episode_index)
 
-
         # Optimize the model
         self.optimizer.zero_grad()
         loss.backward()
@@ -465,7 +466,7 @@ class Agent:
 
             true_value = 1 if reward > 0 else (-1 if reward < 0 else 0)
             true_values[t] = true_value
-            
+
             cumulative_reward[t] += (
                 reward.item() + cumulative_reward[t - 1 if t - 1 > 0 else 0]
             )
@@ -500,9 +501,9 @@ class Agent:
                         torch.load(path, map_location=torch.device("cpu"))
                     )
             elif re.match(".*_ddqn_.*", model_name):
-                self.policy_net = ConvDuelingDQN(
-                    self.INPUT_DIM, self.ACTION_NUMBER
-                ).to(self.device)
+                self.policy_net = ConvDuelingDQN(self.INPUT_DIM, self.ACTION_NUMBER).to(
+                    self.device
+                )
                 if str(self.device) == "cuda":
                     self.policy_net.load_state_dict(torch.load(path))
                 else:
@@ -510,32 +511,36 @@ class Agent:
                         torch.load(path, map_location="cpu")
                     )
             else:
-                raise RuntimeError(
-                    "Please Provide a valid model name or valid path."
-                )
+                raise RuntimeError("Please Provide a valid model name or valid path.")
         else:
             raise RuntimeError("Path can not be None if model Name is not None.")
 
     def load_weights(self, path):
         pass
 
-    def demo(self, env_demo: Environment, model_name=None, path=None, steps=100, fn_signal = None):
+    def demo(
+        self,
+        env_demo: Environment,
+        model_name=None,
+        path=None,
+        steps=100,
+        fn_signal=None,
+    ):
         cumulative_reward = [0 for t in range(len(env_demo.data))]
         reward_list = [0 for t in range(len(env_demo.data))]
         true_values = [0 for t in range(len(env_demo.data))]
         self.load_policy(model_name=model_name, path=path)
-        print(f'demo for {steps} steps.', ) 
+        print(
+            f"demo for {steps} steps.",
+        )
         # TODO: it can be better to get state from service and one state in loop (dedupl)
 
-        for step in tqdm(
-            range(steps)
-        ):  
-            print('>>> tick:', step)
+        for step in tqdm(range(steps)):
+            print(">>> tick:", step)
             # Select and perform an action
-            state = env_demo.get_state()    
+            state = env_demo.get_state()
             action = self.select_action_tensor(state)
             reward, done, _ = env_demo.step(action, state)
-
 
             # Collect reward and true value
             true_value = 1 if reward > 0 else (-1 if reward < 0 else 0)
@@ -546,19 +551,20 @@ class Agent:
             reward_list[step] = reward.item()
             # ...
             vector = (
-                action.item(), 
-                reward.item(), 
-                done, 
-                true_value, 
-                env_demo.agent_positions
-                )
-            
+                action.item(),
+                reward.item(),
+                done,
+                true_value,
+                env_demo.agent_positions,
+            )
+
             if fn_signal is not None:
                 import asyncio
                 import json
+
                 asyncio.run(fn_signal(json.dumps(vector)))
 
-            print('exit state:')
+            print("exit state:")
             pprint(vector)
 
             # Load next state
@@ -568,4 +574,4 @@ class Agent:
                 # ...
                 break
 
-        return cumulative_reward, reward_list, true_values          
+        return cumulative_reward, reward_list, true_values

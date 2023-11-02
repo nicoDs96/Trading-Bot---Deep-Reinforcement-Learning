@@ -1,5 +1,6 @@
 import os
 import sys
+
 parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../TradingAgent"))
 sys.path.append(parent_dir)
 
@@ -39,6 +40,7 @@ class TestBot(unittest.TestCase):
 
     def test_get_agent(self):
         # Write your test case for the get_agent function here
+        agent = Agent()
         pass
 
     def test_train(self):
