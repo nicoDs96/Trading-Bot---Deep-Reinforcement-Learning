@@ -13,11 +13,16 @@ import re
 import os
 from dotenv import load_dotenv
 
+from rich.console import Console
+
 from pprint import pprint
 
 load_dotenv()
 OPTIMISATION = os.getenv("OPTIMISATION" or False)
-print("Optimisation:", OPTIMISATION)
+console = Console()
+
+# print("Optimisation:", OPTIMISATION)
+console.print("Optimisation:", OPTIMISATION)
 
 
 class Agent:
@@ -549,7 +554,10 @@ class Agent:
             cumulative_reward[step] += (
                 reward.item() + cumulative_reward[step - 1 if step - 1 > 0 else 0]
             )
+
+            # reward list
             reward_list[step] = reward.item()
+
             # ...
             vector = (
                 action.item(),
@@ -559,6 +567,7 @@ class Agent:
                 env_demo.agent_positions,
             )
 
+            # send signal
             if fn_signal is not None:
                 import asyncio
                 import json
@@ -572,6 +581,7 @@ class Agent:
                     vector=vector
                     ))
 
+            
             print("exit state:")
             pprint(vector)
 
