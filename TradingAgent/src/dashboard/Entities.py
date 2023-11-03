@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Float
+import os
+from sqlalchemy import Column, Integer, String, Float, JSON, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 
 try:
@@ -14,9 +15,9 @@ class Balance(Base):
     __table_args__ = {"schema": "ml"}
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    profit = Column(Float, required=True)
-    volume = Column(Float, required=True)
+    timestamp = Column(Float, index=True)
+    profit = Column(Float)
+    volume = Column(Float)
 
 
 class Signal(Base):
@@ -24,7 +25,7 @@ class Signal(Base):
     __table_args__ = {"schema": "ml"}
 
     # todo: action with state
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(DateTime, primary_key=True, index=True)
     name = Column(String, index=True)
 
 
@@ -41,10 +42,15 @@ class Item(Base):
     __table_args__ = {"schema": "ml"}
 
     id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(Float)
     name = Column(String, index=True)
+    side = Column(Integer)
+    true = Column(Integer)
+    price = Column(Float)
+    positions = Column(JSON)
+    vector = Column(JSON)
 
-
-recreate = False
+recreate = os.getenv("RECREATE_DB", True)
 if recreate:
     Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)

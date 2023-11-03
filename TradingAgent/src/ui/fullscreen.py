@@ -11,11 +11,9 @@ from rich.console import Console, Group
 from rich.layout import Layout
 from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
-from rich.syntax import Syntax
 from rich.table import Table
 
-console = Console()
-console.log("Server starting...")
+
 
 def make_layout() -> Layout:
     """Define the layout."""
@@ -28,9 +26,10 @@ def make_layout() -> Layout:
     )
     layout["main"].split_row(
         Layout(name="side"),
-        Layout(name="body", ratio=2, minimum_size=60),
+        Layout(name="body", minimum_size=60),
     )
     layout["side"].split(Layout(name="box1"), Layout(name="box2"))
+    layout["body"].split(Layout(name="body1"), Layout(name="body2"))
     return layout
 
 
@@ -77,24 +76,12 @@ class Header:
         grid.add_column(justify="center", ratio=1)
         grid.add_column(justify="right")
         grid.add_row(
-            "[b]ALXY:[/b]Trading Bot",
+            "[white on blue]Trading Bot, ",
             datetime.now().ctime().replace(":", "[blink]:[/]"),
         )
-        return Panel(grid, style="white on blue")
+        return Panel(Align.center(grid, style="white on blue"))
 
 
-def make_syntax() -> Syntax:
-    code = """\
-    if sell > sell, sell = sell
-    if buy > buy, buy = buy
-
-    profit = sell - buy
-
-    reward = profit++
-    ...
-    """
-    syntax = Syntax(code, "python", line_numbers=True)
-    return syntax
 
 def make_table() -> Table:
     table = Table.grid()
@@ -116,6 +103,8 @@ def make_table() -> Table:
     table.add_row("Dec 20, 2016 14:35", "22444", "BTC/USDT" "0.01", "-0.025", "$1,332,439,889")
 
     return table
+
+
 
 
 def demo():
@@ -146,8 +135,9 @@ def demo():
 
     layout = make_layout()
     layout["header"].update(Header())
-    layout["body"].update(make_table())
-    layout["box2"].update(Panel(make_syntax(), border_style="green"))
+    layout["body1"].update(Panel(make_sponsor_message(), border_style="green"))
+    layout["body2"].update(Panel(make_table(), border_style="green"))   
+    layout["box2"].update(Panel(make_table(), border_style="green"))
     layout["box1"].update(Panel(make_sponsor_message(), border_style="red"))
     layout["footer"].update(progress_table)
 

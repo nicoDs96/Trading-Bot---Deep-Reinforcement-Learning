@@ -2,7 +2,9 @@ import os
 import dotenv
 import yaml
 
-dotenv.load_dotenv("../.env")
+dotenv.load_dotenv(
+    "/home/alxy/Codes/Trading-Bot---Deep-Reinforcement-Learning/.env"
+)
 
 HOST = os.getenv("DB_HOST")
 PORT = os.getenv("DB_PORT")

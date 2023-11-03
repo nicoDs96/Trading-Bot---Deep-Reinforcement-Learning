@@ -34,7 +34,7 @@ def retry_fetch_ohlcv(exchange, max_retries, symbol, timeframe, since, limit):
         return ohlcv
     except Exception:
         if num_retries > max_retries:
-            raise  # Exception('Failed to fetch', timeframe, symbol, 'OHLCV in', max_retries, 'attempts')
+            raise Exception('Failed to fetch', timeframe, symbol, 'OHLCV in', max_retries, 'attempts')
 
 
 def scrape_ohlcv(exchange, max_retries, symbol, timeframe, since, limit):

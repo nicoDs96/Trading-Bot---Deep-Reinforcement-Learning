@@ -1,3 +1,4 @@
+import time
 import torch
 from src.utils import (
     load_data_ram,
@@ -11,7 +12,7 @@ from src.Config import COMMISION
 
 # TODO: modify the reward st. we can choose between sharpe ratio reward or profit reward as shown in the paper.
 class Environment:
-    def __init__(self, data, reward, remote=False, days=14):
+    def __init__(self, data, reward, remote=False, days=14, send_profit_fn=None):
         """
         Creates the environment. Note: Before using the environment you must call
         the Environment.reset() method.
@@ -37,6 +38,8 @@ class Environment:
         self.last_price = None
         self.days = days
         self.sell_nothing = True
+
+        self.send_profit_fn = send_profit_fn
 
     def reset(self):
         """
@@ -181,6 +184,15 @@ class Environment:
 
         # TODO: extract it in utils
         if self.use_remote_data:
+            import asyncio
+            asyncio.run(
+                self.send_profit_fn(
+                    timestamp=time.time(),
+                    profit=sum(self.profits),
+                    volume=self.agent_open_position_value,
+                )
+            )
+
             print(".........")
             print("Profit: ", sum(self.profits))
             print("Value:", self.agent_open_position_value)

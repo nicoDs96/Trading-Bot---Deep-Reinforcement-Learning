@@ -1,3 +1,4 @@
+import time
 import torch
 import torch.optim as optim
 import torch.nn.functional as F
@@ -561,8 +562,15 @@ class Agent:
             if fn_signal is not None:
                 import asyncio
                 import json
-
-                asyncio.run(fn_signal(json.dumps(vector)))
+                asyncio.run(fn_signal(
+                    timestamp=time.time(),
+                    name='profit_reward_double_ddqn_model_1200m_1ke_BTC|USDT',
+                    positions=env_demo.agent_positions,
+                    side=action.item(),
+                    true=true_value,
+                    price=env_demo.last_price,
+                    vector=vector
+                    ))
 
             print("exit state:")
             pprint(vector)

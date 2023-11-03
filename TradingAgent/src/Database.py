@@ -1,9 +1,6 @@
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 
-from databases import Database
-
-
 from src.dashboard.Entities import Item, Signal, ComulativeReturn, Balance
 from src.dashboard.connection import database
 
@@ -11,15 +8,27 @@ from src.dashboard.connection import database
 import asyncio
 
 
-async def send_signal(signal):
+async def send_signal(**kwargs):
     await database.connect()
-    await create_item(signal)
+    await create_item(kwargs)
+    await database.disconnect()
+
+async def send_profit(**kwargs):
+    await database.connect()
+    await create_profit(kwargs)
     await database.disconnect()
 
 
-async def create_item(item_name):
+async def create_profit(item):
     async with database.transaction():
-        query = Item.__table__.insert().values(name=item_name)
+        query = Balance.__table__.insert().values(item)
+        await database.execute(query)
+
+
+
+async def create_item(item):
+    async with database.transaction():
+        query = Item.__table__.insert().values(item)
         await database.execute(query)
 
 

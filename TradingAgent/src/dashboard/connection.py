@@ -19,6 +19,7 @@ except Exception as E:
     SCHEMA = os.getenv("DB_SCHEMA")
 
 
+
 # Замените строку подключения на свою базу данных.
 DATABASE_URL = f"postgresql://{NAME}:{PASS}@{HOST}:{PORT}/{NAME}"
 database = Database(DATABASE_URL)

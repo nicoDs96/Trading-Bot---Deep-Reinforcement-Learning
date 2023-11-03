@@ -18,7 +18,7 @@ from src.utils import (
 from dotenv import load_dotenv
 from src.Config import settings
 
-from src.Database import send_signal
+from src.Database import send_signal, send_profit
 import asyncio
 
 
@@ -283,7 +283,10 @@ class RlEcAg_Predictor:
 
                 # load env data
                 profit_demo_env = Environment(
-                    self.df, "profit", remote=True, days=DEMO_PRELOAD_DAYS
+                    self.df, "profit", 
+                    remote=True, 
+                    days=DEMO_PRELOAD_DAYS,
+                    send_profit_fn=send_profit
                 )
 
                 (
