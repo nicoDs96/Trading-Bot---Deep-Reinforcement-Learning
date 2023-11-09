@@ -144,7 +144,7 @@ def get_date_before(days=1):
 
 
 if __name__ == "__main__":
-    ticker = "BTC/USDT"
+    ticker = "USDT/BTC"
     timeframe = "1m"
     exchange = "binance"
     date_one_day_ago = get_date_before()

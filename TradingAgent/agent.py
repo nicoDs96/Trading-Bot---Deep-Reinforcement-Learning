@@ -117,7 +117,7 @@ class RlEcAg_Predictor:
             HIDDEN_DIM,
             ACTION_NUMBER,
             TARGET_UPDATE,
-            MODEL="dqn",
+            MODEL="ddqn",
             DOUBLE=True,
         )
         if self.demo:
@@ -374,7 +374,8 @@ class RlEcAg_Predictor:
                 # os.remove(MODEL_FILEPATH)
                 # while os.path.isfile(path=SAVED_MODEL_FILEPATH):
                 #    pass
-                quality = input()
+                # quality = input()
+                quality = False
                 if quality == "stop":
                     break
 

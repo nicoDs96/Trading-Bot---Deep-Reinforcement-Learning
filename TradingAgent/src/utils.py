@@ -165,14 +165,41 @@ def load_data(filepath=None, timerange=None):
 
 def load_data_ram(days=100, symbol="BTC/USDT", timeframe="1m", exchange="binance"):
     date_one_day_ago = get_date_before(days)
-    data, last_tick = load_to_memory(
-        exchange_id=exchange,
-        max_retries=10,
-        symbol=symbol,
-        timeframe=timeframe,
-        since=date_one_day_ago,
-        limit=1000,
-    )
+    try:
+        # 1
+        data, last_tick = load_to_memory(
+            exchange_id=exchange,
+            max_retries=100,
+            symbol=symbol,
+            timeframe=timeframe,
+            since=date_one_day_ago,
+            limit=1000,
+        )
+    except Exception as E:
+        # TODO: fix it more enterpriseble
+        try:
+            # 2
+            data, last_tick = load_to_memory(
+                exchange_id=exchange,
+                max_retries=100,
+                symbol=symbol,
+                timeframe=timeframe,
+                since=date_one_day_ago,
+                limit=1000,
+            )
+        except Exception as E:
+            # TODO: fix it more enterpriseble
+            print(E)
+            # 3
+            data, last_tick = load_to_memory(
+                exchange_id=exchange,
+                max_retries=100,
+                symbol=symbol,
+                timeframe=timeframe,
+                since=date_one_day_ago,
+                limit=1000,
+            )
+            pass
 
     # Convert milliseconds timestamp to seconds
     timestamp_seconds = last_tick / 1000

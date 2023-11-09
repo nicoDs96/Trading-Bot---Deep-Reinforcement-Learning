@@ -27,3 +27,4 @@ To Run Train and Test:
 
 # Link to test datastream:
 https://perp.pancakeswap.finance/en/futures/v2/BTCUSD?theme=dark&chain=bsc
+/usr/bin/env /usr/bin/python3 TradingAgent/agent.py

@@ -50,7 +50,8 @@ class Item(Base):
     positions = Column(JSON)
     vector = Column(JSON)
 
-recreate = os.getenv("RECREATE_DB", True)
-if recreate:
-    Base.metadata.drop_all(bind=engine)
-Base.metadata.create_all(bind=engine)
+if False:
+    recreate = os.getenv("RECREATE_DB", False)
+    if recreate:
+        Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)

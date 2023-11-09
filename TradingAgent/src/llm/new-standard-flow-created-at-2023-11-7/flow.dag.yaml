@@ -1,0 +1,26 @@
+id: template_standard_flow
+name: Template Standard Flow
+environment:
+  python_requirements_txt: requirements.txt
+inputs:
+  topic:
+    type: string
+    default: hello world
+outputs:
+  joke:
+    type: string
+    reference: ${echo.output}
+nodes:
+- name: echo
+  type: python
+  source:
+    type: code
+    path: echo.py
+  inputs:
+    input: ${joke.output}
+- name: llm_node_i1k7
+  type: llm
+  source:
+    type: code
+    path: llm_node_i1k7.jinja2
+  inputs: {}
